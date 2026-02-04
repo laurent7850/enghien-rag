@@ -154,8 +154,12 @@ export function ChatContainer() {
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
-                <span className="text-xl">🏰</span>
+              <div className="w-12 h-12 flex items-center justify-center">
+                <img
+                  src="/crae-logo.png"
+                  alt="Cercle Royal Archéologique d'Enghien"
+                  className="w-12 h-12 object-contain"
+                />
               </div>
               <div>
                 <h1 className="text-lg font-semibold text-stone-800">
@@ -188,8 +192,12 @@ export function ChatContainer() {
         <div className="max-w-3xl mx-auto py-4">
           {messages.length === 0 && !isLoading ? (
             <div className="px-4 py-8 text-center">
-              <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl">📚</span>
+              <div className="w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                <img
+                  src="/crae-logo.png"
+                  alt="Cercle Royal Archéologique d'Enghien"
+                  className="w-20 h-20 object-contain"
+                />
               </div>
               <h2 className="text-xl font-semibold text-stone-700 mb-2">
                 Bienvenue !
