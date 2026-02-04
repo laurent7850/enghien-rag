@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { MessageBubble } from './MessageBubble';
 import { ChatInput } from './ChatInput';
 import { SuggestionChips } from './SuggestionChips';
@@ -155,10 +156,12 @@ export function ChatContainer() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 flex items-center justify-center">
-                <img
+                <Image
                   src="/crae-logo.png"
                   alt="Cercle Royal Archéologique d'Enghien"
-                  className="w-12 h-12 object-contain"
+                  width={48}
+                  height={48}
+                  className="object-contain"
                 />
               </div>
               <div>
@@ -193,10 +196,12 @@ export function ChatContainer() {
           {messages.length === 0 && !isLoading ? (
             <div className="px-4 py-8 text-center">
               <div className="w-20 h-20 flex items-center justify-center mx-auto mb-4">
-                <img
+                <Image
                   src="/crae-logo.png"
                   alt="Cercle Royal Archéologique d'Enghien"
-                  className="w-20 h-20 object-contain"
+                  width={80}
+                  height={80}
+                  className="object-contain"
                 />
               </div>
               <h2 className="text-xl font-semibold text-stone-700 mb-2">
