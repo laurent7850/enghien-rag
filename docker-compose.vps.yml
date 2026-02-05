@@ -1,12 +1,12 @@
 services:
   web:
-    image: ghcr.io/laurent7850/enghien-rag:8f05643
+    image: ghcr.io/laurent7850/enghien-rag:5d2a5fd
     container_name: enghien-web
     restart: always
     environment:
       - HOSTNAME=0.0.0.0
-      - DATABASE_URL=postgresql://enghien:enghien_secret_2024@enghien-postgres:5432/enghien_rag
-      - OPENROUTER_API_KEY=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
+      - DATABASE_URL=${DATABASE_URL}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
       - SITE_URL=https://enghien.srv767464.hstgr.cloud
       - NODE_ENV=production
       - PORT=3000

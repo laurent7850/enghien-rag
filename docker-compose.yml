@@ -6,9 +6,9 @@ services:
     container_name: enghien-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: enghien
-      POSTGRES_PASSWORD: enghien_secret_2024
-      POSTGRES_DB: enghien_rag
+      POSTGRES_USER: ${POSTGRES_USER:-enghien}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-enghien_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-enghien_rag}
     ports:
       - "5432:5432"
     volumes:

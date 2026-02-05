@@ -30,8 +30,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files (keep .example files)
 .env*
+!.env*.example
 
 # vercel
 .vercel
@@ -49,4 +50,13 @@ scripts/data/chunks.json
 .vscode/
 *.swp
 *.swo
+
+# Deployment artifacts
 enghien-standalone.tar.gz
+deploy-vps.sh
+*.tar
+*.tar.gz
+
+# Secrets (extra protection)
+*secret*
+*credentials*
