@@ -35,7 +35,7 @@ export function ChatInput({ onSend, disabled, placeholder = "Posez votre questio
   };
 
   return (
-    <div className="flex items-end gap-3 p-4 bg-white">
+    <div className="flex items-end gap-2 sm:gap-3 p-2 sm:p-4 bg-white">
       <textarea
         ref={textareaRef}
         value={input}
@@ -45,7 +45,7 @@ export function ChatInput({ onSend, disabled, placeholder = "Posez votre questio
         placeholder={placeholder}
         rows={1}
         className="
-          flex-1 px-4 py-3
+          flex-1 px-3 sm:px-4 py-2.5 sm:py-3
           bg-[#F5F0E6] border border-[#C9A961]/50
           rounded-xl resize-none
           text-[#2D2926] placeholder:text-[#7A5C4A]
@@ -59,7 +59,7 @@ export function ChatInput({ onSend, disabled, placeholder = "Posez votre questio
         onClick={handleSubmit}
         disabled={disabled || !input.trim()}
         className="
-          px-5 py-3
+          px-3 sm:px-5 py-2.5 sm:py-3
           bg-[#722F37] hover:bg-[#5A252C]
           text-white font-medium
           rounded-xl
@@ -68,6 +68,7 @@ export function ChatInput({ onSend, disabled, placeholder = "Posez votre questio
           flex items-center justify-center
           shadow-md hover:shadow-lg
           border border-[#C9A961]/30
+          flex-shrink-0
         "
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -13,10 +13,10 @@ export function MessageBubble({ role, content, sources, isStreaming }: MessageBu
   const isUser = role === 'user';
 
   return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
+    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3 sm:mb-4`}>
       <div
         className={`
-          max-w-[85%] md:max-w-[75%] px-4 py-3 rounded-2xl
+          max-w-[90%] sm:max-w-[85%] md:max-w-[75%] px-3 sm:px-4 py-2.5 sm:py-3 rounded-2xl
           ${isUser
             ? 'bg-[#722F37] text-white rounded-br-md shadow-md'
             : 'bg-white border border-[#C9A961]/40 text-[#2D2926] rounded-bl-md shadow-sm'
