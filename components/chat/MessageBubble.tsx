@@ -2,17 +2,10 @@
 
 import ReactMarkdown from 'react-markdown';
 
-interface SourceItem {
-  id: number;
-  metadata: ChunkMetadata;
-  similarity: number;
-  preview: string;
-}
-
 interface MessageBubbleProps {
   role: 'user' | 'assistant';
   content: string;
-  sources?: SourceItem[];
+  sources?: unknown[];
   isStreaming?: boolean;
 }
 
