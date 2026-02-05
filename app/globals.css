@@ -1,8 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Palette inspirée du CRAE - tons historiques et élégants */
+  --crae-burgundy: #722F37;
+  --crae-burgundy-dark: #5A252C;
+  --crae-burgundy-light: #8B3D47;
+  --crae-gold: #C9A961;
+  --crae-gold-light: #DBC48A;
+  --crae-cream: #F5F0E6;
+  --crae-cream-dark: #EDE5D4;
+  --crae-brown: #5C4033;
+  --crae-brown-light: #7A5C4A;
+  --crae-text: #2D2926;
+  --crae-text-light: #5A524C;
+
+  --background: var(--crae-cream);
+  --foreground: var(--crae-text);
 }
 
 @theme inline {
@@ -12,15 +25,26 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+
+/* Scrollbar personnalisée */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--crae-cream-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--crae-burgundy);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--crae-burgundy-dark);
 }

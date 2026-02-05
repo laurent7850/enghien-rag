@@ -44,7 +44,6 @@ export function ChatContainer() {
   }, [messages, streamingContent]);
 
   const sendMessage = useCallback(async (content: string) => {
-    // Ajouter le message utilisateur
     const userMessage: Message = { role: 'user', content };
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
@@ -100,7 +99,6 @@ export function ChatContainer() {
         }
       }
 
-      // Finaliser le message
       setMessages((prev) => [
         ...prev,
         { role: 'assistant', content: fullContent, sources },
@@ -108,7 +106,6 @@ export function ChatContainer() {
       setStreamingContent('');
       setStreamingSources([]);
 
-      // Charger de nouvelles suggestions
       fetch('/api/enghien/suggestions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -140,7 +137,6 @@ export function ChatContainer() {
     setMessages([]);
     setStreamingContent('');
     setStreamingSources([]);
-    // Recharger les suggestions initiales
     fetch('/api/enghien/suggestions')
       .then((res) => res.json())
       .then((data) => setSuggestions(data.suggestions || []))
@@ -148,23 +144,24 @@ export function ChatContainer() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#faf8f5]">
-      {/* Header */}
-      <header className="px-4 py-4 bg-white border-b border-stone-200 shadow-sm">
-        <div className="max-w-3xl mx-auto">
+    <div className="flex flex-col h-full bg-[#F5F0E6]">
+      {/* Header avec style CRAE */}
+      <header className="bg-[#722F37] text-white shadow-lg">
+        <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 flex items-center justify-center bg-stone-800 rounded-lg">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-100" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="flex items-center gap-4">
+              {/* Logo emblème */}
+              <div className="w-14 h-14 flex items-center justify-center bg-[#5A252C] rounded-full border-2 border-[#C9A961] shadow-inner">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-[#C9A961]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
               </div>
               <div>
-                <h1 className="text-lg font-semibold text-stone-800">
+                <h1 className="text-xl font-bold tracking-wide" style={{ fontFamily: 'Georgia, serif' }}>
                   Histoire d&apos;Enghien
                 </h1>
-                <p className="text-xs text-stone-500">
-                  Interrogez le livre d&apos;Ernest Matthieu (1876)
+                <p className="text-sm text-[#DBC48A] italic">
+                  D&apos;après l&apos;ouvrage d&apos;Ernest Matthieu (1876)
                 </p>
               </div>
             </div>
@@ -172,35 +169,56 @@ export function ChatContainer() {
               <button
                 onClick={handleNewConversation}
                 disabled={isLoading}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-stone-600 hover:text-stone-800 hover:bg-stone-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-4 py-2 text-sm bg-[#5A252C] hover:bg-[#4A1F24] text-[#DBC48A] hover:text-white rounded-lg transition-all duration-200 border border-[#C9A961]/30 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Nouvelle conversation"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                 </svg>
-                <span className="hidden sm:inline">Nouvelle conversation</span>
+                <span className="hidden sm:inline">Accueil</span>
               </button>
             )}
           </div>
         </div>
+        {/* Ligne décorative dorée */}
+        <div className="h-1 bg-gradient-to-r from-transparent via-[#C9A961] to-transparent" />
       </header>
 
-      {/* Messages */}
+      {/* Zone de messages */}
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto py-4">
+        <div className="max-w-4xl mx-auto py-6">
           {messages.length === 0 && !isLoading ? (
-            <div className="px-4 py-8 text-center">
-              <div className="w-16 h-16 flex items-center justify-center mx-auto mb-4 bg-stone-800 rounded-xl">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-amber-100" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
+            <div className="px-4 py-12 text-center">
+              {/* Emblème central */}
+              <div className="relative w-28 h-28 mx-auto mb-6">
+                <div className="absolute inset-0 bg-[#722F37] rounded-full border-4 border-[#C9A961] shadow-xl" />
+                <div className="absolute inset-2 bg-[#5A252C] rounded-full flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-14 w-14 text-[#C9A961]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                </div>
               </div>
-              <h2 className="text-xl font-semibold text-stone-700 mb-2">
-                Bienvenue !
+
+              <h2 className="text-2xl font-bold text-[#722F37] mb-3" style={{ fontFamily: 'Georgia, serif' }}>
+                Bienvenue
               </h2>
-              <p className="text-stone-500 text-sm mb-6 max-w-md mx-auto">
-                Posez-moi des questions sur l&apos;histoire de la ville d&apos;Enghien.
-                Je m&apos;appuie sur le livre d&apos;Ernest Matthieu publié en 1876.
+              <p className="text-[#5A524C] mb-2 max-w-lg mx-auto leading-relaxed">
+                Explorez l&apos;histoire de la ville d&apos;Enghien à travers les écrits
+                d&apos;Ernest Matthieu, historien et archiviste.
+              </p>
+              <p className="text-sm text-[#7A5C4A] mb-8 italic">
+                &laquo; Histoire de la ville d&apos;Enghien &raquo; — Publié en 1876
+              </p>
+
+              {/* Séparateur décoratif */}
+              <div className="flex items-center justify-center gap-4 mb-8">
+                <div className="w-16 h-px bg-[#C9A961]" />
+                <div className="w-2 h-2 bg-[#722F37] rotate-45" />
+                <div className="w-16 h-px bg-[#C9A961]" />
+              </div>
+
+              <p className="text-sm text-[#5C4033] mb-4 font-medium">
+                Posez une question ou choisissez un sujet :
               </p>
               <SuggestionChips
                 suggestions={suggestions}
@@ -219,7 +237,6 @@ export function ChatContainer() {
                 />
               ))}
 
-              {/* Message en cours de streaming */}
               {streamingContent && (
                 <MessageBubble
                   role="assistant"
@@ -229,14 +246,12 @@ export function ChatContainer() {
                 />
               )}
 
-              {/* Loading */}
               {isLoading && !streamingContent && <LoadingIndicator />}
 
-              {/* Suggestions après réponse */}
               {!isLoading && messages.length > 0 && suggestions.length > 0 && (
-                <div className="mt-4">
-                  <p className="text-xs text-stone-500 mb-2 px-1">
-                    Questions suggérées :
+                <div className="mt-6 pt-4 border-t border-[#C9A961]/30">
+                  <p className="text-xs text-[#7A5C4A] mb-3 px-1 font-medium uppercase tracking-wide">
+                    Continuer l&apos;exploration :
                   </p>
                   <SuggestionChips
                     suggestions={suggestions}
@@ -252,10 +267,13 @@ export function ChatContainer() {
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="border-t border-stone-200 bg-white">
-        <div className="max-w-3xl mx-auto">
-          <div className="px-4 py-2 flex justify-end">
+      {/* Footer avec input */}
+      <div className="bg-white border-t-2 border-[#722F37]/20 shadow-inner">
+        <div className="max-w-4xl mx-auto">
+          <div className="px-4 py-2 flex items-center justify-between border-b border-[#EDE5D4]">
+            <span className="text-xs text-[#7A5C4A] italic hidden sm:block">
+              Cercle Royal Archéologique d&apos;Enghien
+            </span>
             <BookFilterSelect
               value={bookFilter}
               onChange={setBookFilter}

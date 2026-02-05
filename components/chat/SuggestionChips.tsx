@@ -10,21 +10,22 @@ export function SuggestionChips({ suggestions, onSelect, disabled }: SuggestionC
   if (suggestions.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-2 px-4 py-3">
+    <div className="flex flex-wrap gap-2 justify-center">
       {suggestions.map((suggestion, index) => (
         <button
           key={index}
           onClick={() => onSelect(suggestion)}
           disabled={disabled}
           className="
-            px-3 py-2 text-sm
-            bg-stone-100 hover:bg-amber-100
-            text-stone-700 hover:text-amber-800
-            rounded-lg border border-stone-200 hover:border-amber-300
-            transition-colors duration-200
+            px-4 py-2.5 text-sm
+            bg-white hover:bg-[#722F37]
+            text-[#5C4033] hover:text-white
+            rounded-lg border border-[#C9A961] hover:border-[#722F37]
+            transition-all duration-200
             disabled:opacity-50 disabled:cursor-not-allowed
-            text-left
+            text-left shadow-sm hover:shadow-md
           "
+          style={{ fontFamily: 'Georgia, serif' }}
         >
           {suggestion}
         </button>

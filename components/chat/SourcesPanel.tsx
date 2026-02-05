@@ -33,8 +33,8 @@ export function SourcesPanel({ sources }: SourcesPanelProps) {
   );
 
   return (
-    <div className="mt-3 pt-3 border-t border-stone-200">
-      <p className="text-xs font-medium text-stone-500 mb-2 flex items-center gap-1">
+    <div className="mt-3 pt-3 border-t border-[#C9A961]/40">
+      <p className="text-xs font-medium text-[#722F37] mb-2 flex items-center gap-1">
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
         </svg>
@@ -63,21 +63,21 @@ export function SourcesPanel({ sources }: SourcesPanelProps) {
                 onClick={() => setExpandedId(isExpanded ? null : source.id)}
                 className="
                   w-full text-left px-2 py-1.5
-                  bg-stone-50 hover:bg-amber-50
-                  rounded border border-stone-200 hover:border-amber-200
+                  bg-[#F5F0E6] hover:bg-[#EDE5D4]
+                  rounded border border-[#C9A961]/30 hover:border-[#722F37]/30
                   transition-colors duration-150
                   flex items-center justify-between gap-2
                 "
               >
-                <span className="text-stone-700">{location}</span>
-                <span className="text-stone-400 text-[10px]">
+                <span className="text-[#5C4033]" style={{ fontFamily: 'Georgia, serif' }}>{location}</span>
+                <span className="text-[#7A5C4A] text-[10px]">
                   {(source.similarity * 100).toFixed(0)}%
                 </span>
               </button>
               {isExpanded && (
-                <div className="mt-1 p-2 bg-amber-50 rounded border border-amber-100 text-stone-600 text-xs leading-relaxed">
+                <div className="mt-1 p-2 bg-[#F5F0E6] rounded border border-[#C9A961]/30 text-[#5C4033] text-xs leading-relaxed">
                   {meta.section && (
-                    <p className="font-medium text-amber-700 mb-1">{meta.section}</p>
+                    <p className="font-medium text-[#722F37] mb-1">{meta.section}</p>
                   )}
                   <p className="italic">&quot;{source.preview}&quot;</p>
                 </div>

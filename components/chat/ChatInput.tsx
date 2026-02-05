@@ -12,7 +12,6 @@ export function ChatInput({ onSend, disabled, placeholder = "Posez votre questio
   const [input, setInput] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -36,7 +35,7 @@ export function ChatInput({ onSend, disabled, placeholder = "Posez votre questio
   };
 
   return (
-    <div className="flex items-end gap-2 p-4 bg-white border-t border-stone-200">
+    <div className="flex items-end gap-3 p-4 bg-white">
       <textarea
         ref={textareaRef}
         value={input}
@@ -47,25 +46,28 @@ export function ChatInput({ onSend, disabled, placeholder = "Posez votre questio
         rows={1}
         className="
           flex-1 px-4 py-3
-          bg-stone-50 border border-stone-200
+          bg-[#F5F0E6] border border-[#C9A961]/50
           rounded-xl resize-none
-          text-stone-700 placeholder:text-stone-400
-          focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500
+          text-[#2D2926] placeholder:text-[#7A5C4A]
+          focus:outline-none focus:ring-2 focus:ring-[#722F37] focus:border-[#722F37]
           disabled:opacity-50 disabled:cursor-not-allowed
           text-sm leading-relaxed
         "
+        style={{ fontFamily: 'Georgia, serif' }}
       />
       <button
         onClick={handleSubmit}
         disabled={disabled || !input.trim()}
         className="
-          px-4 py-3
-          bg-amber-600 hover:bg-amber-700
+          px-5 py-3
+          bg-[#722F37] hover:bg-[#5A252C]
           text-white font-medium
           rounded-xl
-          transition-colors duration-200
+          transition-all duration-200
           disabled:opacity-50 disabled:cursor-not-allowed
           flex items-center justify-center
+          shadow-md hover:shadow-lg
+          border border-[#C9A961]/30
         "
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
