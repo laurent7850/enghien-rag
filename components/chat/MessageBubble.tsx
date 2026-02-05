@@ -1,8 +1,6 @@
 'use client';
 
 import ReactMarkdown from 'react-markdown';
-import { SourcesPanel } from './SourcesPanel';
-import { ChunkMetadata } from '@/lib/types';
 
 interface SourceItem {
   id: number;
@@ -70,9 +68,6 @@ export function MessageBubble({ role, content, sources, isStreaming }: MessageBu
               <span className="inline-block w-2 h-4 bg-[#722F37] animate-pulse ml-0.5" />
             )}
           </div>
-        )}
-        {!isUser && sources && sources.length > 0 && !isStreaming && (
-          <SourcesPanel sources={sources} />
         )}
       </div>
     </div>
