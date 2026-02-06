@@ -26,8 +26,8 @@ export async function searchDocuments(
   options: SearchOptions = {}
 ): Promise<SearchResult[]> {
   const {
-    threshold = 0.4,
-    count = 8,
+    threshold = 0.3,  // Seuil abaissé pour capturer plus de résultats pertinents
+    count = 15,       // Plus de chunks pour un meilleur contexte
     filter = {},
   } = options;
 
