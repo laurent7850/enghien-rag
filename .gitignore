@@ -41,9 +41,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Data files (large)
+# Data files (large) - jamais versionnes : volumineux et parfois sous droits
 scripts/data/*.txt
-scripts/data/chunks.json
+scripts/data/*.json
+scripts/data/*.pdf
 
 # IDE
 .idea/

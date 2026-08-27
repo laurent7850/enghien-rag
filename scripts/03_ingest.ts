@@ -3,11 +3,18 @@ import * as path from 'path';
 import { Pool } from 'pg';
 import OpenAI from 'openai';
 import * as dotenv from 'dotenv';
+import { getOuvrage } from './ouvrages';
 
 // Charger les variables d'environnement
 dotenv.config({ path: path.join(__dirname, '..', '.env.local') });
 
 interface ChunkMetadata {
+  ouvrage: string;
+  ouvrage_titre: string;
+  ouvrage_court: string;
+  ouvrage_auteur: string;
+  ouvrage_annee: number;
+  tome?: number;
   livre: string;
   livre_titre: string;
   chapitre: string;
@@ -92,7 +99,8 @@ async function generateEmbeddings(texts: string[], retries = 0): Promise<number[
 // Insérer un batch dans PostgreSQL
 async function insertBatch(
   chunks: Chunk[],
-  embeddings: number[][]
+  embeddings: number[][],
+  publie: boolean
 ): Promise<void> {
   const client = await pool.connect();
   try {
@@ -101,10 +109,14 @@ async function insertBatch(
       const embedding = embeddings[i];
       const embeddingStr = `[${embedding.join(',')}]`;
 
+      // Le statut de publication est porté par chaque chunk : la recherche
+      // filtre dessus sans jointure.
+      const metadata = { ...chunk.metadata, publie };
+
       await client.query(
         `INSERT INTO enghien_documents (content, embedding, metadata)
          VALUES ($1, $2::vector, $3)`,
-        [chunk.content, embeddingStr, JSON.stringify(chunk.metadata)]
+        [chunk.content, embeddingStr, JSON.stringify(metadata)]
       );
     }
   } finally {
@@ -112,21 +124,53 @@ async function insertBatch(
   }
 }
 
-// Vider la table existante
-async function clearTable(): Promise<void> {
-  await pool.query('TRUNCATE TABLE enghien_documents RESTART IDENTITY');
+/**
+ * Statut de publication déclaré dans le catalogue.
+ *
+ * Il fait autorité sur le fichier de chunks : réingérer un ouvrage déjà en
+ * ligne doit le laisser en ligne, et un ouvrage nouveau reste masqué tant
+ * qu'il n'a pas été validé.
+ */
+async function estPublie(ouvrageId: string): Promise<boolean> {
+  const result = await pool.query(
+    'SELECT publie FROM enghien_ouvrages WHERE id = $1',
+    [ouvrageId]
+  );
+  if (result.rowCount === 0) {
+    throw new Error(
+      `Ouvrage "${ouvrageId}" absent de enghien_ouvrages. ` +
+        'Jouez d\'abord scripts/04_add_ouvrage.sql.'
+    );
+  }
+  return result.rows[0].publie === true;
+}
+
+// Purge SELECTIVE : ne retire que les chunks de l'ouvrage réingéré.
+//
+// L'ancien TRUNCATE vidait toute la table : réingérer un livre effaçait tous
+// les autres, et laissait le site en production sans aucune source le temps de
+// la réingestion.
+async function clearOuvrage(ouvrageId: string): Promise<number> {
+  const result = await pool.query(
+    `DELETE FROM enghien_documents WHERE metadata->>'ouvrage' = $1`,
+    [ouvrageId]
+  );
+  return result.rowCount ?? 0;
 }
 
 async function main() {
-  const chunksPath = path.join(__dirname, 'data', 'chunks.json');
+  const ouvrageId = process.argv[2] || 'matthieu-1876';
+  const ouvrage = getOuvrage(ouvrageId);
+  const chunksPath = path.join(__dirname, 'data', `chunks_${ouvrage.id}.json`);
 
-  console.log('📖 Histoire de la ville d\'Enghien - Ingestion RAG');
+  console.log(`📖 ${ouvrage.titre} — Ingestion RAG`);
+  console.log(`   ${ouvrage.auteur} (${ouvrage.annee})${ouvrage.tome ? `, tome ${ouvrage.tome}` : ''}`);
   console.log('='.repeat(50));
 
   // Vérifier que le fichier chunks existe
   if (!fs.existsSync(chunksPath)) {
-    console.error(`❌ Fichier chunks.json non trouvé!`);
-    console.error('   Exécutez d\'abord: npx tsx scripts/01_clean_and_chunk.ts');
+    console.error(`❌ Fichier non trouvé: ${chunksPath}`);
+    console.error(`   Exécutez d'abord: npx tsx scripts/01_clean_and_chunk.ts ${ouvrage.id}`);
     process.exit(1);
   }
 
@@ -135,10 +179,22 @@ async function main() {
   const chunks: Chunk[] = JSON.parse(fs.readFileSync(chunksPath, 'utf-8'));
   console.log(`   ${chunks.length} chunks chargés`);
 
-  // Vider la table existante
-  console.log('\n🗑️  Vidage de la table existante...');
-  await clearTable();
-  console.log('   Table vidée');
+  // Garde-fou : un fichier de chunks ne doit contenir que l'ouvrage demandé,
+  // sous peine de purger un ouvrage et d'en réinsérer un autre à sa place.
+  const intrus = chunks.filter((c) => c.metadata.ouvrage !== ouvrage.id);
+  if (intrus.length > 0) {
+    console.error(`❌ ${intrus.length} chunks n'appartiennent pas à "${ouvrage.id}".`);
+    console.error(`   Premier intrus: ${intrus[0].metadata.ouvrage}`);
+    process.exit(1);
+  }
+
+  // Purge sélective du seul ouvrage réingéré
+  const publie = await estPublie(ouvrage.id);
+  console.log(`   Statut de publication: ${publie ? 'PUBLIÉ (visible des visiteurs)' : 'non publié (masqué)'}`);
+
+  console.log(`\n🗑️  Purge des chunks existants de "${ouvrage.id}"...`);
+  const supprimes = await clearOuvrage(ouvrage.id);
+  console.log(`   ${supprimes} chunks supprimés (les autres ouvrages sont intacts)`);
 
   // Traitement par batches
   console.log(`\n🚀 Ingestion en cours (batches de ${BATCH_SIZE})...`);
@@ -160,7 +216,7 @@ async function main() {
       const embeddings = await generateEmbeddings(texts);
 
       // Insérer dans PostgreSQL
-      await insertBatch(batch, embeddings);
+      await insertBatch(batch, embeddings, publie);
 
       processedChunks += batch.length;
 
@@ -183,10 +239,22 @@ async function main() {
   console.log(`   - Temps: ${elapsed.toFixed(1)} secondes`);
   console.log(`   - Vitesse: ${(chunks.length / elapsed).toFixed(1)} chunks/s`);
 
-  // Vérification finale
-  console.log('\n🔍 Vérification...');
-  const countResult = await pool.query('SELECT COUNT(*) FROM enghien_documents');
-  console.log(`   ${countResult.rows[0].count} documents dans la base`);
+  // Vérification finale : état du corpus complet, ouvrage par ouvrage, pour
+  // confirmer d'un coup d'œil qu'aucun autre livre n'a été touché.
+  console.log('\n🔍 État du corpus...');
+  const parOuvrage = await pool.query(`
+    SELECT
+      metadata->>'ouvrage' AS ouvrage,
+      metadata->>'publie'  AS publie,
+      COUNT(*)             AS chunks
+    FROM enghien_documents
+    GROUP BY 1, 2
+    ORDER BY 1
+  `);
+  for (const row of parOuvrage.rows) {
+    const statut = row.publie === 'true' ? 'publié' : 'non publié';
+    console.log(`   ${row.ouvrage ?? '(sans ouvrage)'} : ${row.chunks} chunks — ${statut}`);
+  }
 
   // Test de recherche rapide
   console.log('\n🧪 Test de recherche...');

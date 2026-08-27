@@ -6,7 +6,7 @@ import { ChatInput } from './ChatInput';
 import { SuggestionChips } from './SuggestionChips';
 import { BookFilterSelect } from './BookFilterSelect';
 import { LoadingIndicator } from './LoadingIndicator';
-import { ChunkMetadata } from '@/lib/types';
+import { ChunkMetadata, SearchFilter } from '@/lib/types';
 
 interface SourceItem {
   id: number;
@@ -27,7 +27,7 @@ export function ChatContainer() {
   const [streamingContent, setStreamingContent] = useState('');
   const [streamingSources, setStreamingSources] = useState<SourceItem[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [bookFilter, setBookFilter] = useState('');
+  const [bookFilter, setBookFilter] = useState<SearchFilter>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Charger les suggestions initiales
@@ -56,7 +56,7 @@ export function ChatContainer() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: content,
-          filter: bookFilter ? { livre: bookFilter } : undefined,
+          filter: bookFilter.ouvrage || bookFilter.livre ? bookFilter : undefined,
         }),
       });
 

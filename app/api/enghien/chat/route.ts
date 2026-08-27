@@ -4,6 +4,7 @@ import {
   searchDocuments,
   buildContextPrompt,
   buildUserMessage,
+  describeSources,
   SYSTEM_PROMPT,
 } from '@/lib/rag';
 import { ChatRequest, SearchResult } from '@/lib/types';
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest) {
 
     // 2. Construire le contexte
     const context = buildContextPrompt(searchResults);
-    const userMessage = buildUserMessage(message, context);
+    const userMessage = buildUserMessage(message, context, describeSources(searchResults));
 
     // 3. Préparer les métadonnées des sources pour le client
     const sourcesMetadata = searchResults.map((r: SearchResult) => ({

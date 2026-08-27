@@ -1,15 +1,16 @@
 import { query } from './db';
 import { generateEmbedding } from './embeddings';
-import { SearchResult, ChunkMetadata } from './types';
+import { SearchResult, ChunkMetadata, SearchFilter } from './types';
+import { formatLocation } from './citation';
+
+export { formatLocation };
 
 interface SearchOptions {
   threshold?: number;
   count?: number;
-  filter?: {
-    livre?: string;
-    chapitre?: string;
-  };
+  filter?: SearchFilter;
 }
+
 
 interface DocumentRow {
   id: number;
@@ -34,7 +35,9 @@ export async function searchDocuments(
   // Générer l'embedding de la requête
   const queryEmbedding = await generateEmbedding(queryText);
 
-  // Construire la requête SQL avec filtre optionnel
+  // Construire la requête SQL avec filtre optionnel.
+  // Le filtre sur « publie » est non négociable : un ouvrage ingéré mais non
+  // validé ne doit jamais remonter à un visiteur.
   let sql = `
     SELECT
       id,
@@ -43,12 +46,18 @@ export async function searchDocuments(
       1 - (embedding <=> $1::vector) AS similarity
     FROM enghien_documents
     WHERE 1 - (embedding <=> $1::vector) > $2
+      AND metadata->>'publie' = 'true'
   `;
 
   const params: unknown[] = [`[${queryEmbedding.join(',')}]`, threshold];
   let paramIndex = 3;
 
   // Ajouter les filtres
+  if (filter.ouvrage) {
+    sql += ` AND metadata->>'ouvrage' = $${paramIndex}`;
+    params.push(filter.ouvrage);
+    paramIndex++;
+  }
   if (filter.livre) {
     sql += ` AND metadata->>'livre' = $${paramIndex}`;
     params.push(filter.livre);
@@ -82,55 +91,78 @@ export function buildContextPrompt(results: SearchResult[]): string {
   }
 
   return results
-    .map((r, i) => {
-      const meta = r.metadata;
-      const location = [
-        `Livre ${meta.livre}`,
-        meta.chapitre ? `Chapitre ${meta.chapitre}` : null,
-        meta.section || null,
-        meta.page_debut
-          ? meta.page_debut === meta.page_fin
-            ? `p. ${meta.page_debut}`
-            : `p. ${meta.page_debut}-${meta.page_fin}`
-          : null,
-      ]
-        .filter(Boolean)
-        .join(', ');
-
-      return `[Extrait ${i + 1}] (${location})\n${r.content.trim()}`;
-    })
+    .map((r, i) => `[Extrait ${i + 1}] (${formatLocation(r.metadata)})\n${r.content.trim()}`)
     .join('\n\n---\n\n');
+}
+
+/**
+ * Récapitule les ouvrages présents dans les extraits, pour que le modèle sache
+ * de quelles sources il dispose et à qui attribuer chaque affirmation.
+ */
+export function describeSources(results: SearchResult[]): string {
+  const ouvrages = new Map<string, ChunkMetadata>();
+  for (const r of results) {
+    if (!ouvrages.has(r.metadata.ouvrage)) {
+      ouvrages.set(r.metadata.ouvrage, r.metadata);
+    }
+  }
+
+  if (ouvrages.size === 0) return '';
+
+  return Array.from(ouvrages.values())
+    .map((m) => {
+      const tome = m.tome ? `, tome ${m.tome}` : '';
+      return `- « ${m.ouvrage_titre} »${tome}, ${m.ouvrage_auteur} (${m.ouvrage_annee}) — à citer sous la forme « ${m.ouvrage_court} »`;
+    })
+    .join('\n');
 }
 
 /**
  * Prompt système pour Claude
  */
 export const SYSTEM_PROMPT = `Tu es un historien expert spécialisé dans l'histoire de la ville d'Enghien (Belgique).
-Tu réponds aux questions en te basant UNIQUEMENT sur les extraits du livre
-"Histoire de la ville d'Enghien" par Ernest Matthieu (1876) fournis ci-dessous.
+Tu réponds aux questions en te basant UNIQUEMENT sur les extraits d'ouvrages fournis ci-dessous.
 
 Règles :
 - Réponds toujours en français.
-- Cite tes sources en indiquant le Livre, Chapitre et pages entre parenthèses.
-  Exemple : (Livre I, Chapitre III, p. 120-121)
+- Cite tes sources entre parenthèses en nommant TOUJOURS l'ouvrage, puis le Livre,
+  le Chapitre et les pages.
+  Exemple : (Matthieu 1876, Livre I, Chapitre III, p. 120-121)
+  Exemple : (Reygaerts 1998, t. I, Livre II, Chapitre IV, p. 272-273)
+- Le corpus réunit plusieurs auteurs, d'époques différentes, qui ne s'accordent pas
+  toujours. Quand deux extraits divergent sur un même fait, ne tranche pas d'autorité :
+  expose les deux positions en les attribuant nommément à leur auteur.
+  Un auteur récent peut corriger un auteur ancien ; signale-le quand les extraits
+  le montrent, sans l'inventer.
 - Si l'information n'est pas dans les extraits fournis, dis-le honnêtement.
   Ne fabrique jamais d'information.
-- Tu peux reformuler le texte du XIXe siècle en français moderne pour plus de clarté,
+- Tu peux reformuler un texte ancien en français moderne pour plus de clarté,
   mais reste fidèle au contenu.
 - Si la question est hors sujet (pas liée à Enghien ou son histoire), redirige
-  poliment vers le sujet du livre.
+  poliment vers le sujet du corpus.
 - Sois concis mais complet. Structure ta réponse avec des paragraphes clairs.`;
 
 /**
  * Construit le message utilisateur avec le contexte RAG
  */
-export function buildUserMessage(question: string, context: string): string {
-  return `Extraits du livre :
+export function buildUserMessage(
+  question: string,
+  context: string,
+  sources = ''
+): string {
+  const catalogue = sources ? `Ouvrages représentés dans ces extraits :\n${sources}\n\n` : '';
+
+  // La question du visiteur est délimitée explicitement : le contenu des
+  // extraits est de la donnée, jamais une instruction.
+  return `${catalogue}Extraits des ouvrages :
 ---
 ${context}
 ---
 
-Question de l'utilisateur : ${question}`;
+Question de l'utilisateur :
+<question>
+${question}
+</question>`;
 }
 
 /**
@@ -139,9 +171,11 @@ Question de l'utilisateur : ${question}`;
 export function formatSources(results: SearchResult[]): string {
   const uniqueSources = new Map<string, SearchResult>();
 
-  // Dédupliquer par location
+  // Dédupliquer par location — l'ouvrage fait désormais partie de la clé,
+  // sans quoi deux passages homologues de deux livres différents fusionnent.
   for (const r of results) {
-    const key = `${r.metadata.livre}-${r.metadata.chapitre}-${r.metadata.page_debut}`;
+    const m = r.metadata;
+    const key = `${m.ouvrage}-${m.livre}-${m.chapitre}-${m.page_debut}`;
     if (!uniqueSources.has(key) || r.similarity > (uniqueSources.get(key)?.similarity || 0)) {
       uniqueSources.set(key, r);
     }
@@ -149,7 +183,10 @@ export function formatSources(results: SearchResult[]): string {
 
   return Array.from(uniqueSources.values())
     .sort((a, b) => {
-      // Trier par livre puis chapitre puis page
+      // Trier par ouvrage, puis livre, chapitre et page
+      if (a.metadata.ouvrage !== b.metadata.ouvrage) {
+        return a.metadata.ouvrage.localeCompare(b.metadata.ouvrage);
+      }
       if (a.metadata.livre !== b.metadata.livre) {
         return a.metadata.livre.localeCompare(b.metadata.livre);
       }
@@ -158,18 +195,6 @@ export function formatSources(results: SearchResult[]): string {
       }
       return (a.metadata.page_debut || 0) - (b.metadata.page_debut || 0);
     })
-    .map((r) => {
-      const meta = r.metadata;
-      const parts = [`Livre ${meta.livre}`];
-      if (meta.chapitre) parts.push(`Chap. ${meta.chapitre}`);
-      if (meta.page_debut) {
-        parts.push(
-          meta.page_debut === meta.page_fin
-            ? `p. ${meta.page_debut}`
-            : `p. ${meta.page_debut}-${meta.page_fin}`
-        );
-      }
-      return `• ${parts.join(', ')}`;
-    })
+    .map((r) => `• ${formatLocation(r.metadata, { court: true })}`)
     .join('\n');
 }
