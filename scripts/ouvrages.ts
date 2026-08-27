@@ -17,7 +17,10 @@ export interface OuvrageConfig {
   /** Identifiant stable, utilisé comme clé de filtrage et de purge sélective. */
   id: string;
   titre: string;
-  /** Libellé compact affiché dans les citations et le filtre de l'interface. */
+  /**
+   * Libellé compact affiché dans les citations. NE DOIT PAS contenir le tome :
+   * il est ajouté séparément par formatLocation(), sous peine de doublon.
+   */
   titre_court: string;
   auteur: string;
   annee: number;
@@ -60,7 +63,7 @@ export const OUVRAGES: Record<string, OuvrageConfig> = {
   'reygaerts-1998-t1': {
     id: 'reygaerts-1998-t1',
     titre: "La région d'Enghien — Une géographie historique, une histoire urbaine",
-    titre_court: 'Reygaerts 1998, t. I',
+    titre_court: 'Reygaerts 1998',
     auteur: 'Jacques Reygaerts',
     annee: 1998,
     tome: 1,

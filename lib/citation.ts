@@ -10,6 +10,13 @@ import { ChunkMetadata } from './types';
  * Implémentation unique, donc aucun risque de divergence entre ce que le
  * modèle cite et ce que le visiteur voit affiché.
  */
+const ROMAINS = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+
+/** Les tomes se citent en chiffres romains, par convention bibliographique. */
+function tomeEnRomain(tome: number): string {
+  return ROMAINS[tome] ?? String(tome);
+}
+
 export function formatLocation(
   meta: ChunkMetadata,
   options: { court?: boolean } = {}
@@ -24,7 +31,9 @@ export function formatLocation(
 
   return [
     meta.ouvrage_court,
-    meta.tome ? `t. ${meta.tome}` : null,
+    // Le tome est ajouté ici, jamais dans « ouvrage_court » : le porter aux
+    // deux endroits le faisait apparaître en double dans les citations.
+    meta.tome ? `t. ${tomeEnRomain(meta.tome)}` : null,
     meta.livre ? `Livre ${meta.livre}` : null,
     meta.chapitre ? (court ? `Chap. ${meta.chapitre}` : `Chapitre ${meta.chapitre}`) : null,
     court ? null : meta.section || null,

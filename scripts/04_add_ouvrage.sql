@@ -92,7 +92,7 @@ VALUES
   (
     'reygaerts-1998-t1',
     'La région d''Enghien — Une géographie historique, une histoire urbaine',
-    'Reygaerts 1998, t. I',
+    'Reygaerts 1998',
     'Jacques Reygaerts',
     1998,
     1,
