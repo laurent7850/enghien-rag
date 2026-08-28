@@ -68,3 +68,6 @@ __pycache__/
 
 # Donnees d ouvrages : tout scripts/data est hors depot (souvent sous droits)
 scripts/data/
+
+# Claude Code (configuration locale de session)
+.claude/
