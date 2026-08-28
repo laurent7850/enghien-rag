@@ -1,7 +1,17 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { getOuvrage, OuvrageConfig } from './ouvrages';
 
 interface ChunkMetadata {
+  // Identité de l'ouvrage : indispensable dès que le corpus en compte plusieurs,
+  // sans quoi une citation ne peut plus être rattachée à sa source.
+  ouvrage: string;
+  ouvrage_titre: string;
+  ouvrage_court: string;
+  ouvrage_auteur: string;
+  ouvrage_annee: number;
+  tome?: number;
+  // Localisation interne à l'ouvrage
   livre: string;
   livre_titre: string;
   chapitre: string;
@@ -16,14 +26,6 @@ interface Chunk {
   metadata: ChunkMetadata;
 }
 
-// Mapping des titres de livres
-const LIVRE_TITRES: Record<string, string> = {
-  'I': 'Histoire et généalogie',
-  'II': 'Organisation administrative',
-  'III': 'Culte et Bienfaisance',
-  'IV': 'Institutions scientifiques'
-};
-
 // Regex patterns
 const PAGE_MARKER_REGEX = /^—\s*(\d+)\s*—\s*$/gm;
 const LIVRE_REGEX = /^LIVRE\s+([IVX]+)/;
@@ -35,7 +37,7 @@ const MIN_CHUNK_SIZE = 1500;
 const MAX_CHUNK_SIZE = 2500;
 const OVERLAP_SIZE = 300;
 
-function cleanText(text: string): string {
+function cleanText(text: string, ouvrage: OuvrageConfig): string {
   // Normaliser les fins de ligne
   let cleaned = text.replace(/\r\n/g, '\n');
 
@@ -45,8 +47,10 @@ function cleanText(text: string): string {
   // Normaliser les espaces multiples (mais pas les sauts de ligne)
   cleaned = cleaned.replace(/[ \t]+/g, ' ');
 
-  // Corriger certains artefacts OCR courants
-  cleaned = cleaned.replace(/\bk\b/g, 'à'); // "k" isolé souvent = "à"
+  // Corrections OCR propres à l'ouvrage (voir scripts/ouvrages.ts)
+  for (const fix of ouvrage.ocr_fixes) {
+    cleaned = cleaned.replace(fix.pattern, fix.replacement);
+  }
   cleaned = cleaned.replace(/(\w)'(\w)/g, '$1\'$2'); // Normaliser les apostrophes
 
   // Supprimer les lignes vides multiples
@@ -93,11 +97,14 @@ function splitIntoParagraphs(text: string): string[] {
   return text.split(/\n\n+/).filter(p => p.trim().length > 0);
 }
 
-function createChunks(text: string): Chunk[] {
+function createChunks(text: string, ouvrage: OuvrageConfig): Chunk[] {
   const chunks: Chunk[] = [];
   const lines = text.split('\n');
 
-  let currentLivre = 'I';
+  // Vide tant qu'aucun marqueur LIVRE n'est rencontre : les recueils sans
+  // partie de premier niveau (Cahiers) ne doivent pas etre etiquetes
+  // "Livre I" par defaut — formatLocation() omet un livre vide.
+  let currentLivre = '';
   let currentChapitre = '';
   let currentSection: string | undefined;
   let currentContent = '';
@@ -105,14 +112,23 @@ function createChunks(text: string): Chunk[] {
   let chunkIndex = 0;
   let lastChunkEnd = '';
 
+  // La page courante est un état persistant d'un chunk à l'autre : un chunk
+  // plus court qu'une page ne contient aucun marqueur, et resterait sinon sans
+  // folio — donc cité sans page dans l'interface.
+  let currentPage = 0;
+  let chunkStartPage = 0;
+
   function saveChunk() {
     if (currentContent.trim().length < 100) return; // Ignorer les chunks trop petits
 
     const { text: cleanContent, pages } = extractPageNumbers(currentContent);
     const allPages = [...currentPages, ...pages];
 
-    const pageDebut = allPages.length > 0 ? Math.min(...allPages) : 0;
-    const pageFin = allPages.length > 0 ? Math.max(...allPages) : 0;
+    // Début : la page en cours quand le chunk a commencé ; fin : la dernière
+    // page atteinte. On retombe sur les marqueurs internes si l'état est vide
+    // (tout premier chunk du fichier).
+    const pageDebut = chunkStartPage || (allPages.length > 0 ? Math.min(...allPages) : 0);
+    const pageFin = currentPage || (allPages.length > 0 ? Math.max(...allPages) : 0);
 
     // Ajouter l'overlap du chunk précédent
     const contentWithOverlap = lastChunkEnd + cleanContent.trim();
@@ -120,8 +136,14 @@ function createChunks(text: string): Chunk[] {
     chunks.push({
       content: contentWithOverlap,
       metadata: {
+        ouvrage: ouvrage.id,
+        ouvrage_titre: ouvrage.titre,
+        ouvrage_court: ouvrage.titre_court,
+        ouvrage_auteur: ouvrage.auteur,
+        ouvrage_annee: ouvrage.annee,
+        ...(ouvrage.tome !== undefined ? { tome: ouvrage.tome } : {}),
         livre: currentLivre,
-        livre_titre: LIVRE_TITRES[currentLivre] || '',
+        livre_titre: ouvrage.livre_titres[currentLivre] || '',
         chapitre: currentChapitre,
         section: currentSection,
         page_debut: pageDebut,
@@ -136,13 +158,16 @@ function createChunks(text: string): Chunk[] {
     chunkIndex++;
     currentContent = '';
     currentPages = [];
+    chunkStartPage = currentPage;
   }
 
   for (const line of lines) {
     // Détecter les marqueurs de page
     const pageMatch = line.match(/\[\[PAGE:(\d+)\]\]/);
     if (pageMatch) {
-      currentPages.push(parseInt(pageMatch[1], 10));
+      currentPage = parseInt(pageMatch[1], 10);
+      currentPages.push(currentPage);
+      if (!chunkStartPage) chunkStartPage = currentPage;
       continue;
     }
 
@@ -196,14 +221,19 @@ function createChunks(text: string): Chunk[] {
 }
 
 async function main() {
-  const inputPath = path.join(__dirname, 'data', 'histoire_enghien_matthieu_fulltext.txt');
-  const outputPath = path.join(__dirname, 'data', 'chunks.json');
+  const ouvrageId = process.argv[2] || 'matthieu-1876';
+  const ouvrage = getOuvrage(ouvrageId);
 
+  const inputPath = path.join(__dirname, 'data', ouvrage.source_file);
+  const outputPath = path.join(__dirname, 'data', `chunks_${ouvrage.id}.json`);
+
+  console.log(`📖 ${ouvrage.titre}`);
+  console.log(`   ${ouvrage.auteur} (${ouvrage.annee})${ouvrage.tome ? `, tome ${ouvrage.tome}` : ''}\n`);
   console.log('📖 Lecture du fichier source...');
 
   if (!fs.existsSync(inputPath)) {
     console.error(`❌ Fichier non trouvé: ${inputPath}`);
-    console.log('Veuillez placer le fichier "histoire_enghien_matthieu_fulltext.txt" dans le dossier scripts/data/');
+    console.log(`Veuillez placer le fichier "${ouvrage.source_file}" dans le dossier scripts/data/`);
     process.exit(1);
   }
 
@@ -212,11 +242,12 @@ async function main() {
   console.log(`   Lignes: ${rawText.split('\n').length}`);
 
   console.log('\n🧹 Nettoyage du texte...');
-  const cleanedText = cleanText(rawText);
+  const cleanedText = cleanText(rawText, ouvrage);
   console.log(`   Taille après nettoyage: ${(cleanedText.length / 1024 / 1024).toFixed(2)} MB`);
+  console.log(`   Corrections OCR appliquées: ${ouvrage.ocr_fixes.length}`);
 
   console.log('\n✂️  Découpage en chunks...');
-  const chunks = createChunks(cleanedText);
+  const chunks = createChunks(cleanedText, ouvrage);
   console.log(`   Nombre de chunks: ${chunks.length}`);
 
   // Statistiques

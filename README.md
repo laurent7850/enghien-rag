@@ -1,6 +1,17 @@
 # Histoire d'Enghien — Chat RAG
 
-Application de chat RAG (Retrieval-Augmented Generation) permettant d'interroger le livre "Histoire de la ville d'Enghien" d'Ernest Matthieu (1876).
+Application de chat RAG (Retrieval-Augmented Generation) permettant d'interroger un
+corpus d'ouvrages consacrés à l'histoire d'Enghien.
+
+## Corpus
+
+| Ouvrage | Auteur | Année | Droits |
+|---|---|---|---|
+| Histoire de la ville d'Enghien | Ernest Matthieu | 1876 | Domaine public |
+| La région d'Enghien — Une géographie historique, t. I | Jacques Reygaerts | 1998 | Sous droits, autorisation de l'ayant droit |
+
+➡️ **Pour ajouter un ouvrage : [docs/DIGITALISATION.md](docs/DIGITALISATION.md)** —
+procédure complète, du diagnostic du PDF à la publication.
 
 ## Stack technique
 

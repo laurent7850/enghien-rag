@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ChunkMetadata } from '@/lib/types';
+import { formatLocation } from '@/lib/citation';
 
 interface SourceItem {
   id: number;
@@ -19,9 +20,11 @@ export function SourcesPanel({ sources }: SourcesPanelProps) {
 
   if (sources.length === 0) return null;
 
-  // Dédupliquer et trier par pertinence
+  // Dédupliquer et trier par pertinence. L'ouvrage entre dans la clé : deux
+  // passages de livres différents ne doivent pas se confondre.
   const uniqueSources = sources.reduce((acc, source) => {
-    const key = `${source.metadata.livre}-${source.metadata.chapitre}-${source.metadata.page_debut}`;
+    const m = source.metadata;
+    const key = `${m.ouvrage}-${m.livre}-${m.chapitre}-${m.page_debut}`;
     if (!acc.has(key)) {
       acc.set(key, source);
     }
@@ -45,17 +48,7 @@ export function SourcesPanel({ sources }: SourcesPanelProps) {
           const meta = source.metadata;
           const isExpanded = expandedId === source.id;
 
-          const location = [
-            `Livre ${meta.livre}`,
-            meta.chapitre ? `Chap. ${meta.chapitre}` : null,
-            meta.page_debut
-              ? meta.page_debut === meta.page_fin
-                ? `p. ${meta.page_debut}`
-                : `p. ${meta.page_debut}-${meta.page_fin}`
-              : null,
-          ]
-            .filter(Boolean)
-            .join(', ');
+          const location = formatLocation(meta, { court: true });
 
           return (
             <div key={source.id} className="text-xs">
