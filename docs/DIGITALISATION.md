@@ -158,7 +158,11 @@ livres, corrections OCR propres) **et** dans `scripts/04_add_ouvrage.sql` (catal
 `enghien_ouvrages`, avec `publie = FALSE` et la mention des droits).
 
 Le champ `titre_court` est ce que le visiteur lira dans chaque citation :
-`Reygaerts 1998, t. I`. Le garder bref et sans ambiguïté.
+`Reygaerts 1998`. Le garder bref et sans ambiguïté.
+
+⚠️ **Ne jamais y mettre le tome.** Il est porté par le champ `tome` et ajouté
+séparément par `formatLocation()`, en chiffres romains. Le mettre aux deux
+endroits produit des citations du type « Reygaerts 1998, t. I, t. 1, Livre III ».
 
 ---
 
