@@ -61,3 +61,7 @@ deploy-vps.sh
 # Secrets (extra protection)
 *secret*
 *credentials*
+
+# Python
+__pycache__/
+*.pyc
