@@ -11,7 +11,9 @@ Le dépôt de travail est ici : `C:\tmp\enghien-rag`, branche **`develop`**,
 2 commits en avance sur `master`. Chemin court volontaire : Windows dépasse la
 limite `MAX_PATH` lors du build Next depuis un dossier profond.
 
-⚠️ **Rien n'a été poussé sur GitHub, rien n'a touché la production.**
+État du déploiement : `develop` et `master` poussés sur GitHub, image Docker
+construite par le CI. **La bascule de la production reste à faire** — suivre
+[docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md) dans l'ordre.
 
 ## État de la production — inchangé
 
