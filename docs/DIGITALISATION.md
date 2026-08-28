@@ -9,6 +9,73 @@ doit désormais laisser une trace ici.
 
 ---
 
+## 0. Checklist express — intégrer un nouveau livre
+
+La procédure rodée sur Reygaerts t. I et t. II. Chaque étape a une **porte de
+contrôle** : ne pas passer à la suivante tant qu'elle n'est pas verte.
+
+```
+□ 1. DIAGNOSTIC        py -3 (PyMuPDF) : page_count, producer, car./page
+     ✓ porte : couche texte exploitable (>1000 car./page) ? sinon → OCR (§2b)
+
+□ 2. RECONNAISSANCE    feuilleter le PDF : où sont le folio, les titres, les
+     notes ? quelle structure (LIVRE/CHAPITRE/§) ? tome de continuation ?
+     cahiers de planches ? annexes de fin (TOC, iconographie) ?
+     ✓ porte : la table des matières est sous les yeux (photo ou page PDF)
+
+□ 3. CONFIGURATION     déclarer l'ouvrage dans OUVRAGES (00_extract_pdf.py)
+     puis :             py -3 scripts/00_extract_pdf.py <id>
+     ✓ porte : "Folios reconstruits" proche de 0, "Folios rejetés" expliqués
+
+□ 4. CONTRÔLE STRUCTURE  ouvrir <id>_structure.json
+     ✓ porte : nb de livres + chapitres = table des matières, sans trou
+       (une lacune = chiffre romain mal océrisé → heading_corrections)
+
+□ 5. REGISTRE          scripts/ouvrages.ts + scripts/04_add_ouvrage.sql
+     (publie = FALSE, droits renseignés, titre_court SANS le tome)
+
+□ 6. DÉCOUPAGE         npx tsx scripts/01_clean_and_chunk.ts <id>
+     ✓ porte : 0 chunk sans folio, 0 sans chapitre (hors liminaires),
+       0 page_debut > page_fin, 0 régression de folio dans le .txt
+
+□ 7. MIGRATION + INGESTION (base de test d'abord)
+     psql -f scripts/04_add_ouvrage.sql   puis
+     npx tsx scripts/03_ingest.ts <id>
+     ✓ porte : l'état du corpus affiché liste TOUS les ouvrages, intacts,
+       le nouveau marqué "non publié"
+
+□ 8. SMOKE TEST        npx tsx scripts/99_smoke_test.ts
+     ✓ porte : filtre étanche par ouvrage, 0 fuite de contenu masqué,
+       citations correctes (tome en romain, pas de doublon)
+
+□ 9. PUBLICATION       UPDATE publie=TRUE (catalogue + chunks) après
+     validation humaine sur l'interface
+```
+
+Vérification groupée de l'étape 6 (une seule commande) :
+
+```bash
+py -3 -c "
+import json,re,sys
+o=sys.argv[1]
+t=open('scripts/data/%s_fulltext.txt'%o,encoding='utf-8').read()
+f=[int(m.group(1)) for m in re.finditer(r'^— (\d+) —$',t,re.M)]
+c=json.load(open('scripts/data/chunks_%s.json'%o,encoding='utf-8'))
+print('chunks     :',len(c))
+print('folios     : %d -> %d'%(min(f),max(f)))
+print('regressions:',sum(1 for i in range(1,len(f)) if f[i]<f[i-1]))
+print('sans folio :',sum(1 for x in c if not x['metadata']['page_debut']))
+print('sans chap. :',sum(1 for x in c if not x['metadata']['chapitre']))
+print('deb>fin    :',sum(1 for x in c if x['metadata']['page_debut']>x['metadata']['page_fin']))
+" <ouvrage_id>
+```
+
+Durée constatée : **T2 a pris une fraction du temps du T1** — l'essentiel du
+travail restant est la reconnaissance (étape 2) et le contrôle de structure
+(étape 4), pas le code.
+
+---
+
 ## 1. Le contrat de sortie
 
 Tout le pipeline repose sur un **fichier texte brut normalisé**. Quelle que soit
@@ -103,19 +170,29 @@ est imposé dans le prompt (marqueurs de page, structure), plutôt que post-trai
 py -3 scripts/00_extract_pdf.py <ouvrage_id>
 ```
 
-Déclarer d'abord l'ouvrage dans le dictionnaire `OUVRAGES` en tête du script :
+Déclarer d'abord l'ouvrage dans le dictionnaire `OUVRAGES` en tête du script.
+Référence complète des options, toutes éprouvées sur les deux tomes de Reygaerts :
 
 ```python
-"reygaerts-1998-t1": {
-    "pdf": "Géographie Historique d'Enghien T1 reconnu.pdf",
+"reygaerts-1998-t2": {
+    "pdf": "Géographie Historique d'Enghien T2 reconnu.pdf",   # dans ~/Downloads
     "body_size": 12,          # taille de police du corps, en points
     "min_body_chars": 200,    # en deçà : page considérée comme une planche
-    "skip_pages": [1, 2, 3, 4, 5, 6],
-    "stop_at_toc": True,
-    "livres": {"PREMIER": ("I", "Géographie historique des temps anciens"), ...},
+    "min_body_chars_sans_folio": 1200,   # seuil sévère pour les pages SANS folio
+    "skip_pages": [1, 2, 3, 4, 5, 6],    # couvertures, faux-titres
+    "stop_at_headings": ["ICONOGRAPHIE", "TABLE DES MATIERES"],  # annexes de fin
+    "livre_initial": "III",   # tome de continuation : livre en cours à la p. 1
+    "livres": {"PREMIER": ("I", "…"), "DEUXIEME": ("II", "…"), ...},
     "heading_corrections": {"Xin. DE HAINAUT": "XIII. DE HAINAUT", ...},
 }
 ```
+
+| Option | Quand s'en servir |
+|---|---|
+| `min_body_chars_sans_folio` | Toujours (1200). Les pages de légendes de figures montent à ~600 caractères et passeraient le seuil ordinaire : elles fuiraient dans le corpus **et fabriqueraient de faux folios** qui décalent toutes les citations suivantes. |
+| `stop_at_headings` | Marqueurs des annexes de fin (TOC, iconographie). **Ils ne sont honorés que dans les 15 derniers % du volume** (`STOP_MIN_PROGRESSION`) : le même mot peut apparaître en plein corps — « ICONOGRAPHIE » figure au milieu du t. I et l'amputait de 24 %. |
+| `livre_initial` | Tome qui reprend un livre commencé dans le volume précédent (« LIVRE TROISIEME (Suite) »). Sans lui, tout le tome serait rattaché au Livre I. |
+| `heading_corrections` | Chiffres romains mal océrisés dans les titres (« Xin. » pour « XIII. »). Ciblé sur les titres uniquement — jamais de correction globale. |
 
 Le script s'appuie sur **la typographie**, seul signal fiable :
 
@@ -128,7 +205,10 @@ Le script s'appuie sur **la typographie**, seul signal fiable :
 Sorties dans `scripts/data/` : `<id>_fulltext.txt`, `<id>_notes.json` (les notes,
 isolées pour ne pas hacher les phrases), `<id>_structure.json` (à vérifier).
 
-### Les cinq pièges, tous rencontrés sur Reygaerts T1
+### Les neuf pièges, tous rencontrés sur Reygaerts t. I et t. II
+
+Chacun a corrompu silencieusement le corpus avant d'être attrapé par un contrôle.
+C'est la liste à relire avant d'intégrer un livre au profil nouveau.
 
 1. **L'ordre des blocs PDF n'est pas l'ordre de lecture.** PyMuPDF restitue
    souvent les notes de bas de page *avant* la suite du corps. Sans tri par
@@ -143,7 +223,27 @@ isolées pour ne pas hacher les phrases), `<id>_structure.json` (à vérifier).
    « `k` isolé → `à` », utile sur une fonte de 1876, corromprait un texte de 1998.
    → elles vivent dans `scripts/ouvrages.ts`, par ouvrage, jamais en global.
 5. **La table des matières finale duplique la structure** et pollue la recherche.
-   → `stop_at_toc`.
+   → `stop_at_headings`.
+6. **Un marqueur d'arrêt peut apparaître en plein corps de texte.** « ICONOGRAPHIE »
+   figure au milieu du t. I : l'arrêt y amputait 24 % du livre, sans erreur ni
+   avertissement. → un marqueur n'est honoré qu'au-delà de 85 % du volume ; comparer
+   systématiquement le nombre de chunks avant/après tout changement de configuration.
+7. **Des sous-sections numérotées en chiffres romains se font passer pour des
+   chapitres.** « I. ENGHIEN ET L'ABBAYE… » à l'intérieur du chapitre VII aurait
+   rebasculé tout le reste du tome sur « chapitre I ». → règle de monotonie : un
+   numéro de chapitre ne peut que croître ; sinon la ligne est reclassée en section.
+   Le compteur repart à zéro à chaque nouveau livre.
+8. **Un tome de continuation n'annonce pas son livre.** Le t. II ouvre sur
+   « LIVRE TROISIEME (Suite) » puis enchaîne au chapitre II : sans `livre_initial`,
+   ses 863 chunks auraient été rattachés au Livre I. → toujours vérifier la première
+   page de texte d'un volume multiple.
+9. **Les folios peuvent mentir.** Deux sources de faux folios rencontrées : les
+   pages de légendes qui fuient dans le corpus (piège du seuil, voir
+   `min_body_chars_sans_folio`) et les fac-similés de documents anciens dont l'OCR
+   lit un nombre dans la zone d'en-tête. → un folio ne régresse jamais ; la
+   comparaison se fait contre le dernier folio **réellement lu**, pas contre une
+   valeur reconstruite (sinon rejet en cascade de folios valides — constaté :
+   140 rejets à tort avant correction).
 
 **Contrôle obligatoire avant de continuer :** ouvrir `<id>_structure.json` et
 vérifier que le nombre de livres et de chapitres correspond à la table des
@@ -211,7 +311,21 @@ L'ouvrage est en base mais invisible : `searchDocuments()` filtre sur
 `metadata->>'publie' = 'true'`, et `/api/enghien/ouvrages` ne liste que les
 ouvrages publiés.
 
-Valider sur le déploiement de développement, puis publier :
+**Lancer d'abord le smoke test** — lecture seule, sans navigateur :
+
+```bash
+npx tsx scripts/99_smoke_test.ts
+```
+
+Il vérifie sur la base réelle : l'étanchéité du filtre par ouvrage (parcourt
+automatiquement tout le catalogue publié — un nouvel ouvrage est couvert sans
+modifier le test), l'absence de fuite des ouvrages non publiés, le rendu des
+citations, et le catalogue transmis au modèle (c'est lui qui a révélé que deux
+tomes au même `titre_court` devenaient indiscernables pour le LLM).
+
+Puis valider à la main sur l'interface de développement — en particulier, pour
+un corpus multi-auteurs, poser une question où les auteurs divergent et vérifier
+que la réponse attribue nommément chaque position. Enfin publier :
 
 ```sql
 BEGIN;
@@ -249,7 +363,9 @@ avec autorisation. Le champ `droits` de `enghien_ouvrages` doit être renseigné
 pour chaque ouvrage.
 
 - Matthieu 1876 — domaine public.
-- Reygaerts 1998 — sous droits, reproduction autorisée par l'ayant droit.
+- Reygaerts 1998 (t. I et II) — sous droits, reproduction autorisée par l'ayant droit.
+- Volumes à venir (Cahiers de Petit-Enghien I à IV, Jadis à Petit-Enghien) —
+  autorisation confirmée par le propriétaire du projet (août 2026).
 
 Les fichiers texte et les PDF sources ne sont **jamais** versionnés
 (`scripts/data/*.txt` et `chunks*.json` sont dans `.gitignore`). Le dépôt étant
