@@ -11,9 +11,9 @@ Le dépôt de travail est ici : `C:\tmp\enghien-rag`, branche **`develop`**,
 2 commits en avance sur `master`. Chemin court volontaire : Windows dépasse la
 limite `MAX_PATH` lors du build Next depuis un dossier profond.
 
-État du déploiement : `develop` et `master` poussés sur GitHub, image Docker
-construite par le CI. **La bascule de la production reste à faire** — suivre
-[docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md) dans l'ordre.
+✅ **Déployé en production le 28/08/2026** : les 8 ouvrages sont en ligne sur
+https://enghien.srv767464.hstgr.cloud/enghien (image `ce82a9b`, 3 024 chunks
+tous publiés). Dépublication d'urgence : voir docs/DEPLOIEMENT.md.
 
 ## État de la production — inchangé
 

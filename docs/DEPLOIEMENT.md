@@ -1,5 +1,14 @@
 # Déploiement en production — corpus 8 ouvrages
 
+> **✅ Exécuté le 28/08/2026.** Les 8 ouvrages sont en ligne. Ce runbook reste la
+> référence pour les déploiements futurs, avec deux corrections apprises en
+> l'exécutant : (1) l'ordre réel est migration → bascule du conteneur → copie
+> des chunks → publication — l'ANCIEN code ne filtrait pas sur `publie`, copier
+> avant la bascule aurait rendu les ouvrages visibles sans validation ;
+> (2) un conteneur sur plusieurs réseaux Docker doit porter le label
+> `traefik.docker.network=root_default`, sans quoi Traefik choisit parfois le
+> réseau de postgres et le site tombe en 504.
+
 Runbook exact, dans l'ordre. **L'ordre est impératif** : le nouveau code filtre
 sur `publie` ; le mettre en ligne avant la migration renverrait zéro résultat.
 Toutes les commandes s'exécutent depuis un terminal local (elles passent par SSH).

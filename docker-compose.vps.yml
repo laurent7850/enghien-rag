@@ -12,6 +12,9 @@ services:
       - PORT=3000
     labels:
       - traefik.enable=true
+      # Obligatoire des que le conteneur a plusieurs reseaux : sans ce label,
+      # Traefik peut choisir le reseau de postgres (ou il n'est pas) -> 504.
+      - traefik.docker.network=root_default
       - traefik.http.routers.enghien.rule=Host(`enghien.srv767464.hstgr.cloud`)
       - traefik.http.routers.enghien.entrypoints=websecure
       - traefik.http.routers.enghien.tls.certresolver=letsencrypt
