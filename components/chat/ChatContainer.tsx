@@ -161,7 +161,7 @@ export function ChatContainer() {
                   Histoire d&apos;Enghien
                 </h1>
                 <p className="text-xs sm:text-sm text-[#DBC48A] italic truncate">
-                  Ernest Matthieu (1876)
+                  Bibliothèque historique — d&apos;Ernest Matthieu (1876) à nos jours
                 </p>
               </div>
             </div>
@@ -203,11 +203,12 @@ export function ChatContainer() {
                 Bienvenue
               </h2>
               <p className="text-sm sm:text-base text-[#5A524C] mb-2 max-w-lg mx-auto leading-relaxed px-2">
-                Explorez l&apos;histoire de la ville d&apos;Enghien à travers les écrits
-                d&apos;Ernest Matthieu.
+                Explorez l&apos;histoire d&apos;Enghien et de Petit-Enghien à travers
+                huit ouvrages de référence, réunis en une seule bibliothèque.
               </p>
               <p className="text-xs sm:text-sm text-[#7A5C4A] mb-6 sm:mb-8 italic">
-                &laquo; Histoire de la ville d&apos;Enghien &raquo; — 1876
+                De l&apos;&laquo; Histoire de la ville d&apos;Enghien &raquo; (1876) aux
+                &laquo; Cahiers de Petit-Enghien &raquo; (2007)
               </p>
 
               {/* Séparateur décoratif */}
