@@ -189,10 +189,23 @@ Référence complète des options, toutes éprouvées sur les deux tomes de Reyg
 
 | Option | Quand s'en servir |
 |---|---|
-| `min_body_chars_sans_folio` | Toujours (1200). Les pages de légendes de figures montent à ~600 caractères et passeraient le seuil ordinaire : elles fuiraient dans le corpus **et fabriqueraient de faux folios** qui décalent toutes les citations suivantes. |
+| `min_body_chars_sans_folio` | Toujours (1200 pour un ouvrage académique, 600 pour un album). Les pages de légendes de figures montent à ~600 caractères et passeraient le seuil ordinaire : elles fuiraient dans le corpus **et fabriqueraient de faux folios** qui décalent toutes les citations suivantes. |
 | `stop_at_headings` | Marqueurs des annexes de fin (TOC, iconographie). **Ils ne sont honorés que dans les 15 derniers % du volume** (`STOP_MIN_PROGRESSION`) : le même mot peut apparaître en plein corps — « ICONOGRAPHIE » figure au milieu du t. I et l'amputait de 24 %. |
 | `livre_initial` | Tome qui reprend un livre commencé dans le volume précédent (« LIVRE TROISIEME (Suite) »). Sans lui, tout le tome serait rattaché au Livre I. |
 | `heading_corrections` | Chiffres romains mal océrisés dans les titres (« Xin. » pour « XIII. »). Ciblé sur les titres uniquement — jamais de correction globale. |
+
+### Profil « album » (Cahiers de Petit-Enghien)
+
+Les recueils de mémoire locale — prose mêlée de photos légendées, publicités
+d'époque, fac-similés manuscrits, OCR médiocre — utilisent quatre options
+supplémentaires, rodées sur les quatre Cahiers :
+
+| Option | Rôle |
+|---|---|
+| `structure: "articles"` | Pas de LIVRE/CHAPITRE : les titres (taille ≥ `heading_min_size` **et** majuscules — le gras n'est pas fiable dans ces mises en page composites) deviennent des sections numérotées. Un titre contenant un mot impossible (« GU~UlE ») est rejeté. Le champ `livre` reste vide et `formatLocation()` l'omet : citation type « Cahiers de Petit-Enghien, t. I, p. 48-51 ». |
+| `folio_position: "bottom"` | Folio en bas de page. Zone 85-100 % de la hauteur (il flotte selon les volumes), taille admise jusqu'à corps+3, **plancher 7 pt** — les scans de photos sèment des chiffres parasites de 2-3 pt qui voleraient la place du vrai folio. |
+| `footnotes: false` | Le petit corps (7-8 pt) est celui des **légendes de photos** — du contenu à conserver, pas des notes à isoler. |
+| `filter_noise` + `max_junk_ratio` | Deux niveaux de défense contre l'OCR des zones d'images : au niveau **ligne**, suppression des suites de symboles (« e!P~ ~~~[. S2 ») ; au niveau **page**, écartement des fac-similés par qualité lexicale (proportion de mots sans voyelle ou à casse mêlée — la prose réelle reste < 0,20, les fac-similés dépassent 0,35 ; seuil à 0,28). Les publicités d'époque *lisibles* (commerces du village) sont volontairement conservées : c'est du contenu historique. |
 
 Le script s'appuie sur **la typographie**, seul signal fiable :
 
@@ -205,7 +218,7 @@ Le script s'appuie sur **la typographie**, seul signal fiable :
 Sorties dans `scripts/data/` : `<id>_fulltext.txt`, `<id>_notes.json` (les notes,
 isolées pour ne pas hacher les phrases), `<id>_structure.json` (à vérifier).
 
-### Les neuf pièges, tous rencontrés sur Reygaerts t. I et t. II
+### Les dix pièges, tous rencontrés sur le corpus réel
 
 Chacun a corrompu silencieusement le corpus avant d'être attrapé par un contrôle.
 C'est la liste à relire avant d'intégrer un livre au profil nouveau.
@@ -244,6 +257,14 @@ C'est la liste à relire avant d'intégrer un livre au profil nouveau.
    comparaison se fait contre le dernier folio **réellement lu**, pas contre une
    valeur reconstruite (sinon rejet en cascade de folios valides — constaté :
    140 rejets à tort avant correction).
+10. **Un parasite vers l'avant est pire qu'une régression.** Un « 120 » lu dans
+    une légende de photo passe le garde-fou anti-régression, devient la nouvelle
+    référence, et tous les folios réels suivants (46-119) sont rejetés comme
+    « régressions » — la moitié du volume citée avec de mauvaises pages, constaté
+    sur le Cahier T2 (45 rejets). → borne sur les sauts (`FOLIO_MAX_JUMP`, 15)
+    **avec resynchronisation** : si deux pages consécutives portent des valeurs
+    qui se suivent, c'est une vraie rupture (long cahier de planches sauté) et la
+    nouvelle base est adoptée.
 
 **Contrôle obligatoire avant de continuer :** ouvrir `<id>_structure.json` et
 vérifier que le nombre de livres et de chapitres correspond à la table des
@@ -364,8 +385,10 @@ pour chaque ouvrage.
 
 - Matthieu 1876 — domaine public.
 - Reygaerts 1998 (t. I et II) — sous droits, reproduction autorisée par l'ayant droit.
-- Volumes à venir (Cahiers de Petit-Enghien I à IV, Jadis à Petit-Enghien) —
-  autorisation confirmée par le propriétaire du projet (août 2026).
+- Cahiers de Petit-Enghien (t. I à IV) — sous droits, autorisation confirmée par
+  le propriétaire du projet (août 2026). Date du t. II estimée à 1998 (aucune
+  mention dans le volume, situé entre t. I 1996 et t. III 2001).
+- Volume à venir (Jadis à Petit-Enghien) — autorisation confirmée (août 2026).
 
 Les fichiers texte et les PDF sources ne sont **jamais** versionnés
 (`scripts/data/*.txt` et `chunks*.json` sont dans `.gitignore`). Le dépôt étant
