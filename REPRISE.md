@@ -1,7 +1,7 @@
 # Où en est le travail — reprise
 
-Dernière session : digitalisation de **Reygaerts 1998, t. I** et passage du corpus
-en multi-ouvrages.
+Dernières sessions : passage du corpus en multi-ouvrages, digitalisation de
+**Reygaerts 1998, t. I et t. II**.
 
 ## Emplacement
 
@@ -25,7 +25,9 @@ limite `MAX_PATH` lors du build Next depuis un dossier profond.
 - Rôle dédié **`enghien_dev_user`**, droits limités à cette seule base.
   Mot de passe dans `.env.local` (gitignoré).
 - Contenu : 745 chunks Matthieu (copiés en lecture seule depuis la production)
-  + 830 chunks Reygaerts, les deux publiés pour les besoins du test.
+  + 830 chunks Reygaerts t. I + 863 chunks t. II, tous publiés pour le test.
+  Smoke test au vert sur les trois : filtre étanche, aucune fuite de contenu
+  masqué, tomes distingués dans les citations (t. I / t. II).
 
 ### Relancer le test
 
@@ -70,7 +72,7 @@ cd /c/tmp/enghien-rag && npx tsx scripts/99_smoke_test.ts
 4. **Réingérer le Matthieu** : 265 de ses 745 chunks (35,6 %) sont cités sans
    page en production. Le correctif de pagination les récupérerait, mais sa
    structure de 1876 demande sa propre configuration dans `00_extract_pdf.py`.
-5. **Les 6 volumes restants** : Géographie T2, Cahiers de Petit-Enghien I à IV,
+5. **Les 5 volumes restants** : Cahiers de Petit-Enghien I à IV,
    Jadis à Petit-Enghien. Statut des droits à préciser pour chacun.
 
 ## Nettoyage éventuel
