@@ -40,8 +40,7 @@ total 3 024 chunks.
 
 ## 3. Bascule du conteneur web sur la nouvelle image
 
-Remplacer `<TAG>` par le tag du build CI (sha court du commit de merge sur
-`master` — visible sur https://github.com/laurent7850/enghien-rag/actions).
+Le tag du build CI validé pour ce déploiement est **`ce82a9b`**.
 
 ```bash
 ssh -i ~/.ssh/vps767464_ed25519 root@193.203.191.251 "sed -i -E 's|(image: ghcr.io/laurent7850/enghien-rag:).*|\1<TAG>|' /root/enghien/docker-compose.yml && cd /root/enghien && docker compose pull web && docker compose up -d web && sleep 8 && docker logs enghien-web --tail 5"
