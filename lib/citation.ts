@@ -17,6 +17,18 @@ function tomeEnRomain(tome: number): string {
   return ROMAINS[tome] ?? String(tome);
 }
 
+/**
+ * Désignation de l'ouvrage seul, tome compris.
+ *
+ * Deux tomes d'un même ouvrage partagent leur `ouvrage_court` : sans le tome,
+ * ils sont indiscernables et le modèle cite l'un pour l'autre.
+ */
+export function ouvrageLabel(meta: ChunkMetadata): string {
+  return meta.tome
+    ? `${meta.ouvrage_court}, t. ${tomeEnRomain(meta.tome)}`
+    : meta.ouvrage_court;
+}
+
 export function formatLocation(
   meta: ChunkMetadata,
   options: { court?: boolean } = {}

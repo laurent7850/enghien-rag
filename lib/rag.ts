@@ -1,9 +1,9 @@
 import { query } from './db';
 import { generateEmbedding } from './embeddings';
 import { SearchResult, ChunkMetadata, SearchFilter } from './types';
-import { formatLocation } from './citation';
+import { formatLocation, ouvrageLabel } from './citation';
 
-export { formatLocation };
+export { formatLocation, ouvrageLabel };
 
 interface SearchOptions {
   threshold?: number;
@@ -112,7 +112,7 @@ export function describeSources(results: SearchResult[]): string {
   return Array.from(ouvrages.values())
     .map((m) => {
       const tome = m.tome ? `, tome ${m.tome}` : '';
-      return `- « ${m.ouvrage_titre} »${tome}, ${m.ouvrage_auteur} (${m.ouvrage_annee}) — à citer sous la forme « ${m.ouvrage_court} »`;
+      return `- « ${m.ouvrage_titre} »${tome}, ${m.ouvrage_auteur} (${m.ouvrage_annee}) — à citer sous la forme « ${ouvrageLabel(m)} »`;
     })
     .join('\n');
 }

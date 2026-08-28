@@ -40,10 +40,13 @@ OUVRAGES = {
         # En deca de ce nombre de caracteres de corps, la page est consideree
         # comme une planche (figure pleine page) et ecartee.
         "min_body_chars": 200,
+        "min_body_chars_sans_folio": 1200,
         # Pages PDF a exclure explicitement (couvertures, faux-titres).
         "skip_pages": [1, 2, 3, 4, 5, 6],
         # La table des matieres finale duplique la structure : inutile au RAG.
-        "stop_at_toc": True,
+        # Pas d'"ICONOGRAPHIE" ici : contrairement au tome 2, le mot apparait
+        # en plein corps de ce volume.
+        "stop_at_headings": ["TABLE DES MATIERES"],
         "livres": {
             "PREMIER": ("I", "Géographie historique des temps anciens"),
             "DEUXIEME": ("II", "Géographie physique et histoire urbaine"),
@@ -59,6 +62,31 @@ OUVRAGES = {
             "TOPOGRAHIE HISTORIQUE": "TOPOGRAPHIE HISTORIQUE",
             "HEDEGEM, LE": "HEDEGHEM, LE",
         },
+    },
+
+    "reygaerts-1998-t2": {
+        "pdf": "Géographie Historique d'Enghien T2 reconnu.pdf",
+        "titre": "La région d'Enghien — Une géographie historique, une histoire urbaine",
+        "auteur": "Jacques Reygaerts",
+        "annee": 1998,
+        "tome": 2,
+        "body_size": 12,
+        "min_body_chars": 200,
+        "min_body_chars_sans_folio": 1200,
+        "skip_pages": [1, 2, 3, 4, 5, 6],
+        # « ICONOGRAPHIE EXPLICATIVE » precede la table des matieres et n'est
+        # qu'une liste de legendes de figures, organisee par livre : sans arret
+        # ici, elle declencherait de faux changements de livre en fin de tome.
+        "stop_at_headings": ["ICONOGRAPHIE", "TABLE DES MATIERES"],
+        # Le tome 2 reprend le Livre III commence dans le tome 1 : sa page 1
+        # porte « LIVRE TROISIEME (Suite) » et enchaine au chapitre II.
+        "livre_initial": "III",
+        "livres": {
+            "PREMIER": ("I", "Géographie historique des temps anciens"),
+            "DEUXIEME": ("II", "Géographie physique et histoire urbaine"),
+            "TROISIEME": ("III", "Géographie humaine et histoire d'Enghien"),
+        },
+        "heading_corrections": {},
     },
 }
 
@@ -78,9 +106,19 @@ FOOTNOTE_START_RE = re.compile(r"^(\d{1,3})\s*(bis|ter)?\s+\S")
 
 LIVRE_RE = re.compile(r"^LIVRE\s+(PREMIER|DEUXIEME|TROISIEME)\b\.?\s*(.*)$")
 CHAPITRE_RE = re.compile(r"^([IVXL]{1,6})\s*\.\s*(.+)$")
+
+ROMAINS = {
+    "I": 1, "II": 2, "III": 3, "IV": 4, "V": 5, "VI": 6, "VII": 7, "VIII": 8,
+    "IX": 9, "X": 10, "XI": 11, "XII": 12, "XIII": 13, "XIV": 14, "XV": 15,
+    "XVI": 16, "XVII": 17, "XVIII": 18, "XIX": 19, "XX": 20,
+}
 SECTION_RE = re.compile(r"^(\d{1,2})\s*\.\s*(.+)$")
 # Sections alphabetiques : "A. LES PORTES", "B. LES DROITS SEIGNEURIAUX"
 SECTION_ALPHA_RE = re.compile(r"^([A-F])\s*\.\s*(.+)$")
+
+# Un marqueur d'arret n'est pris en compte qu'au-dela de cette fraction du
+# volume : les annexes de fin ne commencent jamais au milieu du livre.
+STOP_MIN_PROGRESSION = 0.85
 
 
 def uppercase_ratio(text):
@@ -155,8 +193,12 @@ def classify_page(lines, height, cfg):
     return folio, body, notes
 
 
-def heading_kind(line, cfg):
-    """Identifie un titre et le normalise vers les marqueurs du chunker."""
+def heading_kind(line, cfg, etat):
+    """Identifie un titre et le normalise vers les marqueurs du chunker.
+
+    `etat` porte le numero du dernier chapitre rencontre : il sert a distinguer
+    un vrai chapitre d'une sous-section elle aussi numerotee en chiffres romains.
+    """
     text = line["text"]
     if not line["bold"]:
         return None
@@ -180,6 +222,14 @@ def heading_kind(line, cfg):
 
     m = CHAPITRE_RE.match(text)
     if m and len(m.group(2).strip()) > 3:
+        valeur = ROMAINS.get(m.group(1).upper())
+        # Un numero de chapitre progresse toujours. Un « I. » qui reapparait
+        # apres un « VII. » est une sous-section, pas un nouveau chapitre :
+        # sans ce controle, tout le reste du chapitre serait mal rattache.
+        if valeur is not None and valeur <= etat["chapitre_num"]:
+            return ("section", "§ {}. — {}".format(m.group(1), m.group(2).strip()), "")
+        if valeur is not None:
+            etat["chapitre_num"] = valeur
         return ("chapitre", "CHAPITRE " + m.group(1), m.group(2).strip())
 
     m = SECTION_RE.match(text)
@@ -209,9 +259,20 @@ def main():
     print("Pages   : {}\n".format(doc.page_count))
 
     out, all_notes = [], []
-    stats = {"texte": 0, "planches": 0, "vides": 0, "sans_folio": 0, "notes": 0}
+    stats = {"texte": 0, "planches": 0, "vides": 0, "sans_folio": 0,
+             "folios_rejetes": 0, "notes": 0}
     structure = []
     last_folio = 0
+    last_observed = 0
+    etat = {"chapitre_num": 0}
+
+    # Un tome peut reprendre un livre commence dans le precedent. Sans ce
+    # marqueur initial, le chunker rattacherait tout le debut au Livre I.
+    livre_initial = cfg.get("livre_initial")
+    if livre_initial:
+        out.append("LIVRE " + livre_initial)
+        out.append("")
+        print("Livre initial force a {} (tome de continuation).".format(livre_initial))
 
     for index in range(doc.page_count):
         pdf_page = index + 1
@@ -227,29 +288,64 @@ def main():
         folio, body, notes = classify_page(lines, page.rect.height, cfg)
         body_chars = sum(len(l["text"]) for l in body if l["size"] >= cfg["body_size"])
 
-        if body_chars < cfg["min_body_chars"]:
+        # Une page sans folio imprime est presque toujours une planche. Les
+        # legendes de figures peuvent depasser le seuil ordinaire (jusqu'a ~600
+        # caracteres) et fabriqueraient alors de faux folios, decalant les
+        # citations de toutes les pages suivantes. On leur applique donc un
+        # seuil nettement plus severe : une vraie page de texte en compte ~2300.
+        seuil = cfg["min_body_chars"] if folio is not None else cfg.get(
+            "min_body_chars_sans_folio", cfg["min_body_chars"]
+        )
+        if body_chars < seuil:
             stats["planches"] += 1
             continue
 
-        if cfg["stop_at_toc"] and any(
-            strip_accents(l["text"]).upper().startswith("TABLE DES MATIERES") for l in body
-        ):
-            print("Table des matieres atteinte page PDF {} : arret.".format(pdf_page))
+        # Un marqueur d'arret ne vaut que dans les annexes de fin de volume :
+        # le meme mot peut apparaitre en plein corps de texte, et l'arret
+        # amputerait alors silencieusement une partie de l'ouvrage.
+        en_fin_de_volume = pdf_page > doc.page_count * STOP_MIN_PROGRESSION
+        arret = next(
+            (
+                marqueur
+                for marqueur in cfg.get("stop_at_headings", [])
+                for l in body
+                if strip_accents(l["text"]).upper().startswith(marqueur)
+            ),
+            None,
+        ) if en_fin_de_volume else None
+        if arret:
+            print('"{}" atteint page PDF {} : arret.'.format(arret, pdf_page))
             break
+
+        # Un folio ne regresse jamais. Une valeur inferieure a la precedente
+        # vient d'un fac-simile ou d'une planche dont l'OCR a produit un nombre
+        # parasite dans la zone d'en-tete : la retenir fausserait les citations.
+        #
+        # La comparaison porte sur le dernier folio REELLEMENT LU, jamais sur un
+        # folio reconstruit : une suite de pages sans folio ferait deriver la
+        # valeur de reference vers le haut et provoquerait un rejet en cascade
+        # de folios pourtant valides.
+        if folio is not None and last_observed and folio < last_observed:
+            stats["folios_rejetes"] += 1
+            folio = None
 
         if folio is None:
             folio = last_folio + 1
             stats["sans_folio"] += 1
+        else:
+            last_observed = folio
         last_folio = folio
 
         out.append("— {} —".format(folio))
         for line in body:
-            kind = heading_kind(line, cfg)
+            kind = heading_kind(line, cfg, etat)
             if kind:
                 type_, marker, titre = kind
                 out.append("")
                 out.append(marker if not titre else "{}. {}".format(marker, titre))
                 out.append("")
+                if type_ == "livre":
+                    etat["chapitre_num"] = 0
                 structure.append(
                     {"type": type_, "marker": marker, "titre": titre, "page": folio}
                 )
@@ -282,6 +378,7 @@ def main():
     print("Planches ecartees   : {}".format(stats["planches"]))
     print("Pages vides         : {}".format(stats["vides"]))
     print("Folios reconstruits : {}".format(stats["sans_folio"]))
+    print("Folios rejetes      : {} (regression, fac-similes)".format(stats["folios_rejetes"]))
     print("Notes extraites     : {}".format(stats["notes"]))
     print("Titres detectes     : {}".format(len(structure)))
     print("\nTexte : {} ({:,} caracteres)".format(txt_path, len(text)))

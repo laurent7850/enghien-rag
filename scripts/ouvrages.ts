@@ -78,6 +78,24 @@ export const OUVRAGES: Record<string, OuvrageConfig> = {
     // dans 00_extract_pdf.py, où le contexte typographique permet de cibler.
     ocr_fixes: [],
   },
+
+  'reygaerts-1998-t2': {
+    id: 'reygaerts-1998-t2',
+    titre: "La région d'Enghien — Une géographie historique, une histoire urbaine",
+    titre_court: 'Reygaerts 1998',
+    auteur: 'Jacques Reygaerts',
+    annee: 1998,
+    tome: 2,
+    source_file: 'reygaerts-1998-t2_fulltext.txt',
+    // Le tome 2 ne contient que la suite du Livre III ; les deux autres sont
+    // déclarés pour que le libellé reste correct si un renvoi y mène.
+    livre_titres: {
+      I: 'Géographie historique des temps anciens',
+      II: 'Géographie physique et histoire urbaine',
+      III: "Géographie humaine et histoire d'Enghien",
+    },
+    ocr_fixes: [],
+  },
 };
 
 export function getOuvrage(id: string): OuvrageConfig {

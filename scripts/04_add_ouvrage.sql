@@ -100,6 +100,18 @@ VALUES
     FALSE,
     'Sous droits — reproduction autorisée par l''ayant droit',
     20
+  ),
+  (
+    'reygaerts-1998-t2',
+    'La région d''Enghien — Une géographie historique, une histoire urbaine',
+    'Reygaerts 1998',
+    'Jacques Reygaerts',
+    1998,
+    2,
+    '{"III": "Géographie humaine et histoire d''Enghien"}'::jsonb,
+    FALSE,
+    'Sous droits — reproduction autorisée par l''ayant droit',
+    30
   )
 ON CONFLICT (id) DO UPDATE
 SET titre       = EXCLUDED.titre,

@@ -15,7 +15,7 @@ dotenv.config({ path: path.join(__dirname, '..', '.env.local') });
 
 import { searchDocuments, describeSources } from '../lib/rag';
 import { formatLocation } from '../lib/citation';
-import { closePool } from '../lib/db';
+import { closePool, query } from '../lib/db';
 
 const QUESTIONS = [
   "Qui étaient les seigneurs d'Enghien ?",
@@ -47,11 +47,15 @@ async function main() {
     }
   }
 
-  // Contrôle du filtre par ouvrage
+  // Contrôle du filtre par ouvrage — sur tout le catalogue, pour qu'un ouvrage
+  // ajouté plus tard soit couvert sans modifier ce test.
   console.log('\n' + '='.repeat(70));
   console.log('🔎 Contrôle du filtre par ouvrage');
   console.log('='.repeat(70));
-  for (const ouvrage of ['matthieu-1876', 'reygaerts-1998-t1']) {
+  const catalogue = await query<{ id: string }>(
+    'SELECT id FROM enghien_ouvrages WHERE publie = TRUE ORDER BY ordre'
+  );
+  for (const { id: ouvrage } of catalogue) {
     const r = await searchDocuments("l'enceinte de la ville", { count: 5, filter: { ouvrage } });
     const fuites = r.filter((x) => x.metadata.ouvrage !== ouvrage);
     console.log(`   filtre=${ouvrage} → ${r.length} extraits, ${fuites.length} hors-filtre`);
