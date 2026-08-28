@@ -64,6 +64,56 @@ OUVRAGES = {
         },
     },
 
+    "matthieu-1876": {
+        "pdf": "histoiredelavilleEnghienMatthieu.pdf",
+        "titre": "Histoire de la ville d'Enghien",
+        "auteur": "Ernest Matthieu",
+        "annee": 1876,
+        # Numerisation Internet Archive 2011 (LuraDocument) : l'OCR eclate les
+        # lignes imprimees en fragments de tailles disparates -> regroupement
+        # par lignes visuelles obligatoire.
+        "row_tolerance": 8,
+        # Folio imprime « — 66 — » en tete de page, plus grand que le corps.
+        "folio_style": "dash",
+        "folio_top_zone": 0.16,
+        "body_size": 6,
+        "min_body_chars": 300,
+        "min_body_chars_sans_folio": 500,
+        # Couvertures et pages de garde Internet Archive.
+        "skip_pages": [1, 2, 3, 4, 5, 6, 7, 8],
+        "stop_at_headings": ["TABLE DES MATIERES", "TABLE DES MATIÈRES"],
+        # Typographie 1876 sans gras exploitable dans la couche OCR.
+        "headings_require_bold": False,
+        "livres": {
+            "PREMIER": ("I", "Histoire et généalogie"),
+            "DEUXIEME": ("II", "Organisation administrative"),
+            "TROISIEME": ("III", "Culte et Bienfaisance"),
+            "QUATRIEME": ("IV", "Institutions scientifiques"),
+        },
+        "heading_corrections": {
+            "CHAPITEE": "CHAPITRE",
+            # page de dedicace en fac-simile prise pour un chapitre : neutralisee
+            "CHAPITRE ILL": "PLANCHE ILL",
+            "CHAPITRE IL ": "CHAPITRE II ",
+            "CHAPITRE IL.": "CHAPITRE II.",
+            "CHAPITRE HI": "CHAPITRE III",
+            "CHAPITRE IH": "CHAPITRE III",
+            "CHAPITRE IL": "CHAPITRE II",
+            "CHAPITRE H": "CHAPITRE II",
+        },
+        "filter_noise": True,
+        "max_junk_ratio": 0.40,
+        "footnotes": False,
+        # Le volume relie plusieurs parties a paginations distinctes (le vol. 1
+        # s'acheve p. 419 sur « La suite au prochain volume » ; la suite reprend
+        # a la p. 149 des Annales ; les annexes repartent vers 24). Frontieres
+        # verifiees sur les images des pages.
+        "folio_series_breaks": {9: 55, 378: 146, 728: 24},
+        # L'OCR de cette numerisation deforme souvent un chiffre du folio
+        # (« 400 » pour 100, « 836 » pour 336) : saut admis reduit d'autant.
+        "folio_max_jump": 3,
+    },
+
     "cahiers-pe-t1": {
         "pdf": "Cahier de Petit enghien T I HR.pdf",
         "titre": "Les Cahiers de Petit-Enghien",
@@ -219,13 +269,17 @@ FOLIO_BOTTOM_MIN_Y = 0.85
 # creent des trous reels d'une dizaine de pages au plus).
 FOLIO_MAX_JUMP = 15
 FOLIO_RE = re.compile(r"^(\d{1,3})$")
+# Editions anciennes : le folio est imprime « — 66 — », souvent plus grand que
+# le corps. Le motif exige au moins un tiret pour ne pas gober un nombre isole.
+FOLIO_DASH_RE = re.compile(r"^[—\-–\s]+(\d{1,3})[—\-–\s]+$|^[—\-–\s]*(\d{1,3})[—\-–\s]+$|^[—\-–\s]+(\d{1,3})[—\-–\s]*$")
 
 # Les notes de bas de page : police nettement plus petite, en bas de page.
 FOOTNOTE_MAX_SIZE = 8
 FOOTNOTE_MIN_Y_RATIO = 0.78
 FOOTNOTE_START_RE = re.compile(r"^(\d{1,3})\s*(bis|ter)?\s+\S")
 
-LIVRE_RE = re.compile(r"^LIVRE\s+(PREMIER|DEUXIEME|TROISIEME)\b\.?\s*(.*)$")
+LIVRE_RE = re.compile(r"^LIVRE\s+(PREMIER|DEUXIEME|TROISIEME|QUATRIEME)\b\.?\s*(.*)$")
+CHAPITRE_WORD_RE = re.compile(r"^CHAPITRE\s+([IVXL]{1,6})\b\.?\s*(.*)$")
 CHAPITRE_RE = re.compile(r"^([IVXL]{1,6})\s*\.\s*(.+)$")
 
 ROMAINS = {
@@ -282,6 +336,40 @@ def read_lines(page):
     return lines
 
 
+def cluster_rows(lines, tolerance):
+    """Regroupe les fragments en lignes visuelles.
+
+    Certains OCR anciens (Internet Archive/LuraDocument) eclatent une meme
+    ligne imprimee en fragments a des ordonnees legerement differentes et des
+    tailles disparates : un tri fin les melange. On regroupe tout fragment a
+    moins de `tolerance` points de la ligne en cours, puis on ordonne par x.
+    """
+    if not lines:
+        return lines
+    lines = sorted(lines, key=lambda l: l["y"])
+    rows, current = [], [lines[0]]
+    for line in lines[1:]:
+        if line["y"] - current[-1]["y"] <= tolerance:
+            current.append(line)
+        else:
+            rows.append(current)
+            current = [line]
+    rows.append(current)
+    merged = []
+    for row in rows:
+        row.sort(key=lambda l: l["x"])
+        merged.append(
+            {
+                "text": " ".join(l["text"] for l in row),
+                "size": max(l["size"] for l in row),
+                "bold": any(l["bold"] for l in row),
+                "y": row[0]["y"],
+                "x": row[0]["x"],
+            }
+        )
+    return merged
+
+
 VOYELLES_RE = re.compile(r"[aeiouyàâäéèêëîïôöùûüœ]")
 CASSE_MELEE_RE = re.compile(r"[a-zà-ÿ][A-ZÀ-Ÿ]")
 MOT_RE = re.compile(r"[^\W\d_]{2,}", re.UNICODE)
@@ -336,19 +424,32 @@ def classify_page(lines, height, cfg):
 
         # En bas de page, le folio flotte davantage (87-95 % de la hauteur
         # selon les volumes) et peut etre un peu plus gros que le corps.
+        folio_dash = cfg.get("folio_style") == "dash"
+        zone_haute = cfg.get("folio_top_zone", FOLIO_MAX_Y_RATIO)
         in_folio_zone = (
-            y_ratio > FOLIO_BOTTOM_MIN_Y if folio_bottom else y_ratio < FOLIO_MAX_Y_RATIO
+            y_ratio > FOLIO_BOTTOM_MIN_Y if folio_bottom else y_ratio < zone_haute
         )
-        max_size = body_size + 3 if folio_bottom else body_size
-        # Plancher : les scans de photos sement des chiffres parasites de
-        # 2-3 pt qui voleraient la place du vrai folio.
-        if folio is None and in_folio_zone and 7 <= line["size"] <= max_size:
-            m = FOLIO_RE.match(text)
-            if m:
-                folio = int(m.group(1))
-                continue
+        if folio_dash:
+            # « — 66 — » : la presence des tirets suffit a identifier le folio,
+            # aucune contrainte de taille (il est plus grand que le corps).
+            if folio is None and in_folio_zone:
+                m = FOLIO_DASH_RE.match(text)
+                if m:
+                    folio = int(next(g for g in m.groups() if g))
+                    continue
+        else:
+            max_size = body_size + 3 if folio_bottom else body_size
+            # Plancher : les scans de photos sement des chiffres parasites de
+            # 2-3 pt qui voleraient la place du vrai folio.
+            if folio is None and in_folio_zone and 7 <= line["size"] <= max_size:
+                m = FOLIO_RE.match(text)
+                if m:
+                    folio = int(m.group(1))
+                    continue
 
-        if filter_noise and not plausible(text):
+        # Les grandes lignes d'affichage (numeraux de LIVRE « I. — ») ont peu
+        # de caracteres alphanumeriques mais sont structurelles : exemptees.
+        if filter_noise and line["size"] < body_size + 6 and not plausible(text):
             continue
 
         if footnotes:
@@ -402,9 +503,11 @@ def heading_kind(line, cfg, etat):
             return ("section", "§ {}. — {}".format(etat["article_num"], titre), "")
         return None
 
-    if not line["bold"]:
+    flat_early = strip_accents(text).upper()
+    marqueur_structurel = flat_early.startswith("LIVRE ") or flat_early.startswith("CHAPITRE ")
+    if cfg.get("headings_require_bold", True) and not line["bold"] and not marqueur_structurel:
         return None
-    if uppercase_ratio(text) < 0.9:
+    if uppercase_ratio(text) < 0.9 and not marqueur_structurel:
         return None
     if len(text) < 4:
         return None
@@ -422,9 +525,32 @@ def heading_kind(line, cfg, etat):
         if num:
             return ("livre", "LIVRE " + num, titre)
 
+    # Edition 1876 : le numeral est imprime au-dessus du mot (« I. — » puis
+    # « LIVRE Histoire et genealogie. »). Le numeral est memorise au passage
+    # (etat["numeral_pendant"]) et consomme ici.
+    if flat.startswith("LIVRE ") and etat.get("numeral_pendant"):
+        num = etat.pop("numeral_pendant")
+        declares = {v[0] for v in cfg["livres"].values()}
+        if num in declares:
+            titre = text.split(" ", 1)[1].strip(" .") if " " in text else ""
+            return ("livre", "LIVRE " + num, titre)
+
+    m = CHAPITRE_WORD_RE.match(flat)
+    if m:
+        valeur = ROMAINS.get(m.group(1).upper())
+        if valeur is not None and valeur > etat["chapitre_num"]:
+            etat["chapitre_num"] = valeur
+            return ("chapitre", "CHAPITRE " + m.group(1), m.group(2).strip())
+        # numero non monotone ou illisible : renvoi en plein texte, pas un titre
+        return None
+
     m = CHAPITRE_RE.match(text)
     if m and len(m.group(2).strip()) > 3:
         valeur = ROMAINS.get(m.group(1).upper())
+        # « ILL. MA AC EXCELL... » (ILLustrissima, fac-simile de dedicace)
+        # matche le motif mais n'est pas un chiffre romain : rejete.
+        if valeur is None:
+            return None
         # Un numero de chapitre progresse toujours. Un « I. » qui reapparait
         # apres un « VII. » est une sous-section, pas un nouveau chapitre :
         # sans ce controle, tout le reste du chapitre serait mal rattache.
@@ -457,7 +583,7 @@ def main():
 
     doc = fitz.open(pdf_path)
     print("Ouvrage : " + cfg["titre"])
-    print("Auteur  : {} ({}), tome {}".format(cfg["auteur"], cfg["annee"], cfg["tome"]))
+    print("Auteur  : {} ({}){}".format(cfg["auteur"], cfg["annee"], ", tome {}".format(cfg["tome"]) if cfg.get("tome") else ""))
     print("Pages   : {}\n".format(doc.page_count))
 
     out, all_notes = [], []
@@ -484,6 +610,9 @@ def main():
 
         page = doc[index]
         lines = read_lines(page)
+        tolerance = cfg.get("row_tolerance")
+        if tolerance:
+            lines = cluster_rows(lines, tolerance)
         if not lines:
             stats["vides"] += 1
             continue
@@ -539,8 +668,15 @@ def main():
         # planches saute) et la nouvelle base est adoptee. Sans cela, un seul
         # nombre parasite vers l'avant ferait rejeter en cascade tous les
         # folios reels suivants (constate : 45 rejets sur le Cahier T2).
+        rupture = cfg.get("folio_series_breaks", {}).get(pdf_page)
+        if rupture is not None:
+            last_folio = rupture - 1
+            last_observed = rupture - 1
+            pending_folio = None
+
         if folio is not None and last_observed:
-            suspect = folio < last_observed or folio - last_folio > FOLIO_MAX_JUMP
+            max_jump = cfg.get("folio_max_jump", FOLIO_MAX_JUMP)
+            suspect = folio < last_observed or folio - last_folio > max_jump
             if suspect:
                 if pending_folio is not None and abs(folio - (pending_folio + 1)) <= 1:
                     stats["folios_resync"] += 1
@@ -562,7 +698,14 @@ def main():
 
         out.append("— {} —".format(folio))
         for line in body:
+            m_num = re.match(r"^([IVX]{1,4})[\s.—–\-]*$", line["text"].strip())
+            if m_num and line["size"] >= cfg["body_size"] + 6 and m_num.group(1) in ROMAINS:
+                etat["numeral_pendant"] = m_num.group(1)
+                continue
             kind = heading_kind(line, cfg, etat)
+            # le numeral ne vaut que pour la ligne immediatement suivante
+            if kind is None or kind[0] != "livre":
+                etat.pop("numeral_pendant", None)
             if kind:
                 type_, marker, titre = kind
                 out.append("")
