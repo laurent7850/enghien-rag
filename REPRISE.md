@@ -74,9 +74,9 @@ cd /c/tmp/enghien-rag && npx tsx scripts/99_smoke_test.ts
    **L'ordre n'est pas négociable** : ingérer avant que la production ne filtre
    sur `publie` rendrait Reygaerts visible des visiteurs immédiatement.
 3. **Dossier local `Ville-enghien`** : toujours vide, à remplacer par un clone.
-4. **Réingérer le Matthieu** : 265 de ses 745 chunks (35,6 %) sont cités sans
-   page en production. Le correctif de pagination les récupérerait, mais sa
-   structure de 1876 demande sa propre configuration dans `00_extract_pdf.py`.
+4. ~~Réingérer le Matthieu~~ : fait (28/08/2026). Réextrait depuis le PDF
+   Internet Archive : 797 chunks, 0 sans page (contre 265/745 avant), pages des
+   3 séries de pagination respectées, structure 4 livres / 20 chapitres complète.
 5. ~~Dernier volume~~ : fait — le corpus source prévu est complet.
 
 ## Nettoyage éventuel

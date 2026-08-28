@@ -44,7 +44,8 @@ export const OUVRAGES: Record<string, OuvrageConfig> = {
     titre_court: 'Matthieu 1876',
     auteur: 'Ernest Matthieu',
     annee: 1876,
-    source_file: 'histoire_enghien_matthieu_fulltext.txt',
+    // Reextrait depuis le PDF Internet Archive via 00_extract_pdf.py.
+    source_file: 'matthieu-1876_fulltext.txt',
     livre_titres: {
       I: 'Histoire et généalogie',
       II: 'Organisation administrative',

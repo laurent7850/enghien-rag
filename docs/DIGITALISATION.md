@@ -214,6 +214,23 @@ Référence complète des options, toutes éprouvées sur les deux tomes de Reyg
 | `livre_initial` | Tome qui reprend un livre commencé dans le volume précédent (« LIVRE TROISIEME (Suite) »). Sans lui, tout le tome serait rattaché au Livre I. |
 | `heading_corrections` | Chiffres romains mal océrisés dans les titres (« Xin. » pour « XIII. »). Ciblé sur les titres uniquement — jamais de correction globale. |
 
+### Profil « numérisation ancienne » (Matthieu 1876, Internet Archive)
+
+Les numérisations d'époque (LuraDocument/Archive.org) posent trois problèmes
+propres, traités par ces options :
+
+| Option | Rôle |
+|---|---|
+| `row_tolerance` | L'OCR éclate chaque ligne imprimée en fragments d'ordonnées et de tailles disparates : un tri fin les mélange. Regroupe en lignes visuelles tout fragment à moins de N points (8 pour le Matthieu). |
+| `folio_style: "dash"` + `folio_top_zone` | Folio imprimé « — 66 — » en tête, plus grand que le corps : reconnu par ses tirets, sans contrainte de taille. |
+| `folio_series_breaks` + `folio_max_jump` | Le volume relie des parties à **paginations distinctes** (vol. 1 : 55-419 ; suite : 146-493 ; annexes : 24-82 — numérotation des Annales du Cercle). Les frontières se déclarent après vérification **sur les images des pages** ; le saut admis se réduit à 3 car l'OCR déforme un chiffre sur dix (« 400 » pour 100, « 836 » pour 336 — c'est de là que venait le `page_max=836` de l'ancienne ingestion). Les citations restent non ambiguës grâce au Livre accolé à la page. |
+| `headings_require_bold: false` | Pas de gras exploitable dans la couche OCR de 1876 ; les marqueurs LIVRE/CHAPITRE sont reconnus à la casse mixte près, et le numéral de LIVRE imprimé au-dessus du mot (« I. — » puis « LIVRE Histoire… ») est capté par une ligne d'attente. |
+
+Piège supplémentaire (le 11ᵉ) : **une abréviation latine peut mimer un chiffre
+romain** — « ILL. MA AC EXCELL… » (*ILLustrissima*, dédicace en fac-similé)
+matchait le motif de chapitre. Tout numéral extrait doit être validé contre la
+table des chiffres romains connus, jamais accepté sur sa seule forme.
+
 ### Profil « album » (Cahiers de Petit-Enghien)
 
 Les recueils de mémoire locale — prose mêlée de photos légendées, publicités
