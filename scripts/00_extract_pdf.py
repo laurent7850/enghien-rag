@@ -64,6 +64,123 @@ OUVRAGES = {
         },
     },
 
+    "cahiers-pe-t1": {
+        "pdf": "Cahier de Petit enghien T I HR.pdf",
+        "titre": "Les Cahiers de Petit-Enghien",
+        "auteur": "Union des groupements patriotiques de Petit-Enghien",
+        "annee": 1996,
+        "tome": 1,
+        # Album de memoire villageoise : prose, photos legendees, fac-similes.
+        # Corps en 10-12 pt selon les pages, titres d'articles a partir de 13.
+        "body_size": 10,
+        "heading_min_size": 13,
+        "min_body_chars": 200,
+        # Les pages sans folio sont surtout des pleines pages de photos.
+        "min_body_chars_sans_folio": 600,
+        "skip_pages": [1, 2, 3],
+        "stop_at_headings": [],
+        # Pas de LIVRE/CHAPITRE : des articles a titres libres.
+        "structure": "articles",
+        "livres": {},
+        # Le folio est imprime en bas de page, pas en tete.
+        "folio_position": "bottom",
+        # Pas de notes de bas de page ; le petit corps est celui des legendes
+        # de photos, qui sont du contenu a conserver.
+        "footnotes": False,
+        # OCR mediocre sur les zones de photos : filtrer les lignes de bruit.
+        "filter_noise": True,
+        # Pages de reclames et de documents manuscrits scannes : ecartees.
+        "max_junk_ratio": 0.28,
+        "heading_corrections": {},
+    },
+    "cahiers-pe-t2": {
+        "pdf": "Cahier de Petit-Enghien T II HR.pdf",
+        "titre": "Les Cahiers de Petit-Enghien",
+        "auteur": "Union des groupements patriotiques de Petit-Enghien",
+        "annee": 1998,  # estimation : entre T1 (1996) et T3 (2001), aucune date dans le volume,
+        "tome": 2,
+        # Album de memoire villageoise : prose, photos legendees, fac-similes.
+        # Corps en 10-12 pt selon les pages, titres d'articles a partir de 13.
+        "body_size": 10,
+        "heading_min_size": 13,
+        "min_body_chars": 200,
+        # Les pages sans folio sont surtout des pleines pages de photos.
+        "min_body_chars_sans_folio": 600,
+        "skip_pages": [1, 2, 3],
+        "stop_at_headings": [],
+        # Pas de LIVRE/CHAPITRE : des articles a titres libres.
+        "structure": "articles",
+        "livres": {},
+        # Le folio est imprime en bas de page, pas en tete.
+        "folio_position": "bottom",
+        # Pas de notes de bas de page ; le petit corps est celui des legendes
+        # de photos, qui sont du contenu a conserver.
+        "footnotes": False,
+        # OCR mediocre sur les zones de photos : filtrer les lignes de bruit.
+        "filter_noise": True,
+        # Pages de reclames et de documents manuscrits scannes : ecartees.
+        "max_junk_ratio": 0.28,
+        "heading_corrections": {},
+    },
+    "cahiers-pe-t3": {
+        "pdf": "Cahier de Petit-Enghien T III.pdf",
+        "titre": "Les Cahiers de Petit-Enghien",
+        "auteur": "Union des groupements patriotiques de Petit-Enghien",
+        "annee": 2001,
+        "tome": 3,
+        # Album de memoire villageoise : prose, photos legendees, fac-similes.
+        # Corps en 10-12 pt selon les pages, titres d'articles a partir de 13.
+        "body_size": 10,
+        "heading_min_size": 13,
+        "min_body_chars": 200,
+        # Les pages sans folio sont surtout des pleines pages de photos.
+        "min_body_chars_sans_folio": 600,
+        "skip_pages": [1, 2, 3],
+        "stop_at_headings": [],
+        # Pas de LIVRE/CHAPITRE : des articles a titres libres.
+        "structure": "articles",
+        "livres": {},
+        # Le folio est imprime en bas de page, pas en tete.
+        "folio_position": "bottom",
+        # Pas de notes de bas de page ; le petit corps est celui des legendes
+        # de photos, qui sont du contenu a conserver.
+        "footnotes": False,
+        # OCR mediocre sur les zones de photos : filtrer les lignes de bruit.
+        "filter_noise": True,
+        # Pages de reclames et de documents manuscrits scannes : ecartees.
+        "max_junk_ratio": 0.28,
+        "heading_corrections": {},
+    },
+    "cahiers-pe-t4": {
+        "pdf": "Cahier de Petit Enghien T IV HR.pdf",
+        "titre": "Les Cahiers de Petit-Enghien",
+        "auteur": "Union des groupements patriotiques de Petit-Enghien",
+        "annee": 2007,
+        "tome": 4,
+        # Album de memoire villageoise : prose, photos legendees, fac-similes.
+        # Corps en 10-12 pt selon les pages, titres d'articles a partir de 13.
+        "body_size": 10,
+        "heading_min_size": 13,
+        "min_body_chars": 200,
+        # Les pages sans folio sont surtout des pleines pages de photos.
+        "min_body_chars_sans_folio": 600,
+        "skip_pages": [1, 2, 3],
+        "stop_at_headings": [],
+        # Pas de LIVRE/CHAPITRE : des articles a titres libres.
+        "structure": "articles",
+        "livres": {},
+        # Le folio est imprime en bas de page, pas en tete.
+        "folio_position": "bottom",
+        # Pas de notes de bas de page ; le petit corps est celui des legendes
+        # de photos, qui sont du contenu a conserver.
+        "footnotes": False,
+        # OCR mediocre sur les zones de photos : filtrer les lignes de bruit.
+        "filter_noise": True,
+        # Pages de reclames et de documents manuscrits scannes : ecartees.
+        "max_junk_ratio": 0.28,
+        "heading_corrections": {},
+    },
+
     "reygaerts-1998-t2": {
         "pdf": "Géographie Historique d'Enghien T2 reconnu.pdf",
         "titre": "La région d'Enghien — Une géographie historique, une histoire urbaine",
@@ -97,6 +214,10 @@ OUVRAGES = {
 # Le folio imprime : nombre seul, en haut de page, dans une police plus petite
 # que le corps.
 FOLIO_MAX_Y_RATIO = 0.08
+FOLIO_BOTTOM_MIN_Y = 0.85
+# Saut maximal admis entre deux folios lus (les cahiers de planches ecartes
+# creent des trous reels d'une dizaine de pages au plus).
+FOLIO_MAX_JUMP = 15
 FOLIO_RE = re.compile(r"^(\d{1,3})$")
 
 # Les notes de bas de page : police nettement plus petite, en bas de page.
@@ -161,32 +282,88 @@ def read_lines(page):
     return lines
 
 
+VOYELLES_RE = re.compile(r"[aeiouyàâäéèêëîïôöùûüœ]")
+CASSE_MELEE_RE = re.compile(r"[a-zà-ÿ][A-ZÀ-Ÿ]")
+MOT_RE = re.compile(r"[^\W\d_]{2,}", re.UNICODE)
+
+
+def junk_ratio(texts):
+    """Proportion de mots impossibles dans un ensemble de lignes.
+
+    Detecte les pages de fac-similes (reclames, documents manuscrits) dont
+    l'OCR produit des lettres mais pas des mots : consonnes sans voyelle,
+    casse melee en plein mot, chaines interminables. La prose reelle reste
+    sous ~5 % ; ces pages depassent 25 %.
+    """
+    words = MOT_RE.findall(" ".join(texts))
+    if len(words) < 15:
+        return 0.0
+    def junky(w):
+        if len(w) >= 3 and not VOYELLES_RE.search(w.lower()):
+            return True
+        if CASSE_MELEE_RE.search(w):
+            return True
+        return len(w) >= 16
+    return sum(1 for w in words if junky(w)) / len(words)
+
+
+def plausible(text):
+    """Ligne de texte reel, par opposition au bruit OCR d'une photo.
+
+    Les scans de photos et de documents manuscrits produisent des lignes de
+    symboles ("e!P~ ~~~[. S2 <") qui pollueraient les chunks. Une ligne est
+    plausible si elle est essentiellement alphanumerique.
+    """
+    core = [c for c in text if not c.isspace()]
+    if not core:
+        return False
+    alnum = sum(1 for c in core if c.isalnum())
+    return alnum >= 3 and alnum / len(core) >= 0.7
+
+
 def classify_page(lines, height, cfg):
     """Separe folio, notes de bas de page et corps de texte."""
     folio = None
     body, notes = [], []
     body_size = cfg["body_size"]
+    folio_bottom = cfg.get("folio_position") == "bottom"
+    footnotes = cfg.get("footnotes", True)
+    filter_noise = cfg.get("filter_noise", False)
 
     for line in lines:
         y_ratio = line["y"] / height
         text = line["text"]
 
-        if folio is None and y_ratio < FOLIO_MAX_Y_RATIO and line["size"] < body_size:
+        # En bas de page, le folio flotte davantage (87-95 % de la hauteur
+        # selon les volumes) et peut etre un peu plus gros que le corps.
+        in_folio_zone = (
+            y_ratio > FOLIO_BOTTOM_MIN_Y if folio_bottom else y_ratio < FOLIO_MAX_Y_RATIO
+        )
+        max_size = body_size + 3 if folio_bottom else body_size
+        # Plancher : les scans de photos sement des chiffres parasites de
+        # 2-3 pt qui voleraient la place du vrai folio.
+        if folio is None and in_folio_zone and 7 <= line["size"] <= max_size:
             m = FOLIO_RE.match(text)
             if m:
                 folio = int(m.group(1))
                 continue
 
-        is_small = line["size"] <= FOOTNOTE_MAX_SIZE
-        is_low = y_ratio >= FOOTNOTE_MIN_Y_RATIO
-        # Une note commence par son numero d'appel ; les lignes suivantes de la
-        # meme note sont simplement petites et basses.
-        if is_small or (is_low and line["size"] < body_size and FOOTNOTE_START_RE.match(text)):
-            notes.append(text)
+        if filter_noise and not plausible(text):
             continue
-        if is_low and notes and line["size"] < body_size:
-            notes.append(text)
-            continue
+
+        if footnotes:
+            is_small = line["size"] <= FOOTNOTE_MAX_SIZE
+            is_low = y_ratio >= FOOTNOTE_MIN_Y_RATIO
+            # Une note commence par son numero d'appel ; les lignes suivantes
+            # de la meme note sont simplement petites et basses.
+            if is_small or (
+                is_low and line["size"] < body_size and FOOTNOTE_START_RE.match(text)
+            ):
+                notes.append(text)
+                continue
+            if is_low and notes and line["size"] < body_size:
+                notes.append(text)
+                continue
 
         body.append(line)
 
@@ -200,6 +377,31 @@ def heading_kind(line, cfg, etat):
     un vrai chapitre d'une sous-section elle aussi numerotee en chiffres romains.
     """
     text = line["text"]
+
+    # Structure "articles" (recueils, albums) : pas de LIVRE/CHAPITRE, des
+    # articles a titres libres. Un titre est une ligne nettement plus grande
+    # que le corps, en majuscules — le gras n'est pas fiable dans ces mises en
+    # page composites. Chaque article devient une section numerotee.
+    if cfg.get("structure") == "articles":
+        letters = sum(1 for c in text if c.isalpha())
+        mots = MOT_RE.findall(text)
+        if (
+            line["size"] >= cfg.get("heading_min_size", 13)
+            and uppercase_ratio(text) >= 0.9
+            and letters >= 5
+            and plausible(text)
+            # aucun mot impossible : un titre garble ("GU~UlE LAMBI") polluerait
+            # les citations de tout l'article qu'il ouvre
+            and not any(
+                not VOYELLES_RE.search(w.lower()) or CASSE_MELEE_RE.search(w)
+                for w in mots
+            )
+        ):
+            etat["article_num"] += 1
+            titre = re.sub(r"\s+", " ", text).strip(" .~-")
+            return ("section", "§ {}. — {}".format(etat["article_num"], titre), "")
+        return None
+
     if not line["bold"]:
         return None
     if uppercase_ratio(text) < 0.9:
@@ -260,11 +462,12 @@ def main():
 
     out, all_notes = [], []
     stats = {"texte": 0, "planches": 0, "vides": 0, "sans_folio": 0,
-             "folios_rejetes": 0, "notes": 0}
+             "folios_rejetes": 0, "folios_resync": 0, "fac_similes": 0, "notes": 0}
     structure = []
     last_folio = 0
     last_observed = 0
-    etat = {"chapitre_num": 0}
+    pending_folio = None
+    etat = {"chapitre_num": 0, "article_num": 0}
 
     # Un tome peut reprendre un livre commence dans le precedent. Sans ce
     # marqueur initial, le chunker rattacherait tout le debut au Livre I.
@@ -300,6 +503,14 @@ def main():
             stats["planches"] += 1
             continue
 
+        # Fac-similes (reclames, manuscrits) : des lettres, pas des mots.
+        max_junk = cfg.get("max_junk_ratio")
+        if max_junk is not None:
+            jr = junk_ratio([l["text"] for l in body])
+            if jr > max_junk:
+                stats["fac_similes"] += 1
+                continue
+
         # Un marqueur d'arret ne vaut que dans les annexes de fin de volume :
         # le meme mot peut apparaitre en plein corps de texte, et l'arret
         # amputerait alors silencieusement une partie de l'ouvrage.
@@ -317,17 +528,30 @@ def main():
             print('"{}" atteint page PDF {} : arret.'.format(arret, pdf_page))
             break
 
-        # Un folio ne regresse jamais. Une valeur inferieure a la precedente
-        # vient d'un fac-simile ou d'une planche dont l'OCR a produit un nombre
-        # parasite dans la zone d'en-tete : la retenir fausserait les citations.
+        # Un folio ne regresse jamais, et ne saute pas non plus de dizaines de
+        # pages d'un coup : dans les deux cas, la valeur vient d'un nombre
+        # parasite (fac-simile, legende de photo) et la retenir fausserait les
+        # citations. La comparaison porte sur le dernier folio REELLEMENT LU,
+        # jamais sur un folio reconstruit.
         #
-        # La comparaison porte sur le dernier folio REELLEMENT LU, jamais sur un
-        # folio reconstruit : une suite de pages sans folio ferait deriver la
-        # valeur de reference vers le haut et provoquerait un rejet en cascade
-        # de folios pourtant valides.
-        if folio is not None and last_observed and folio < last_observed:
-            stats["folios_rejetes"] += 1
-            folio = None
+        # Resynchronisation : si deux pages consecutives portent des valeurs
+        # qui se suivent, c'est une vraie rupture de sequence (long cahier de
+        # planches saute) et la nouvelle base est adoptee. Sans cela, un seul
+        # nombre parasite vers l'avant ferait rejeter en cascade tous les
+        # folios reels suivants (constate : 45 rejets sur le Cahier T2).
+        if folio is not None and last_observed:
+            suspect = folio < last_observed or folio - last_folio > FOLIO_MAX_JUMP
+            if suspect:
+                if pending_folio is not None and abs(folio - (pending_folio + 1)) <= 1:
+                    stats["folios_resync"] += 1
+                    pending_folio = None
+                    last_observed = folio
+                else:
+                    pending_folio = folio
+                    stats["folios_rejetes"] += 1
+                    folio = None
+            else:
+                pending_folio = None
 
         if folio is None:
             folio = last_folio + 1
@@ -378,7 +602,9 @@ def main():
     print("Planches ecartees   : {}".format(stats["planches"]))
     print("Pages vides         : {}".format(stats["vides"]))
     print("Folios reconstruits : {}".format(stats["sans_folio"]))
-    print("Folios rejetes      : {} (regression, fac-similes)".format(stats["folios_rejetes"]))
+    print("Folios rejetes      : {} (parasites)".format(stats["folios_rejetes"]))
+    print("Resynchronisations  : {}".format(stats["folios_resync"]))
+    print("Fac-similes ecartes : {} (qualite lexicale)".format(stats["fac_similes"]))
     print("Notes extraites     : {}".format(stats["notes"]))
     print("Titres detectes     : {}".format(len(structure)))
     print("\nTexte : {} ({:,} caracteres)".format(txt_path, len(text)))

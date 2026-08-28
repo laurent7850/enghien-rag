@@ -112,6 +112,43 @@ VALUES
     FALSE,
     'Sous droits — reproduction autorisée par l''ayant droit',
     30
+  ),
+  (
+    'cahiers-pe-t1',
+    'Les Cahiers de Petit-Enghien',
+    'Cahiers de Petit-Enghien',
+    'Union des groupements patriotiques de Petit-Enghien',
+    1996, 1, '{}'::jsonb, FALSE,
+    'Sous droits — reproduction autorisée (confirmée par le propriétaire du projet, août 2026)',
+    40
+  ),
+  (
+    'cahiers-pe-t2',
+    'Les Cahiers de Petit-Enghien',
+    'Cahiers de Petit-Enghien',
+    'Union des groupements patriotiques de Petit-Enghien',
+    -- Date estimée : aucune mention dans le volume, situé entre t.1 (1996) et t.3 (2001)
+    1998, 2, '{}'::jsonb, FALSE,
+    'Sous droits — reproduction autorisée (confirmée par le propriétaire du projet, août 2026)',
+    41
+  ),
+  (
+    'cahiers-pe-t3',
+    'Les Cahiers de Petit-Enghien',
+    'Cahiers de Petit-Enghien',
+    'Union des groupements patriotiques de Petit-Enghien',
+    2001, 3, '{}'::jsonb, FALSE,
+    'Sous droits — reproduction autorisée (confirmée par le propriétaire du projet, août 2026)',
+    42
+  ),
+  (
+    'cahiers-pe-t4',
+    'Les Cahiers de Petit-Enghien',
+    'Cahiers de Petit-Enghien',
+    'Union des groupements patriotiques de Petit-Enghien',
+    2007, 4, '{}'::jsonb, FALSE,
+    'Sous droits — reproduction autorisée (confirmée par le propriétaire du projet, août 2026)',
+    43
   )
 ON CONFLICT (id) DO UPDATE
 SET titre       = EXCLUDED.titre,

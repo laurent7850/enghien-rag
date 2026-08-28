@@ -96,6 +96,58 @@ export const OUVRAGES: Record<string, OuvrageConfig> = {
     },
     ocr_fixes: [],
   },
+
+  'cahiers-pe-t1': {
+    id: 'cahiers-pe-t1',
+    titre: 'Les Cahiers de Petit-Enghien',
+    titre_court: 'Cahiers de Petit-Enghien',
+    auteur: 'Union des groupements patriotiques de Petit-Enghien',
+    annee: 1996,
+    tome: 1,
+    source_file: 'cahiers-pe-t1_fulltext.txt',
+    // Album de mémoire villageoise : articles à titres libres, pas de
+    // structure LIVRE/CHAPITRE.
+    livre_titres: {},
+    ocr_fixes: [],
+  },
+
+  'cahiers-pe-t2': {
+    id: 'cahiers-pe-t2',
+    titre: 'Les Cahiers de Petit-Enghien',
+    titre_court: 'Cahiers de Petit-Enghien',
+    auteur: 'Union des groupements patriotiques de Petit-Enghien',
+    // Aucune date dans le volume : estimation entre le t. 1 (1996) et le
+    // t. 3 (2001).
+    annee: 1998,
+    tome: 2,
+    source_file: 'cahiers-pe-t2_fulltext.txt',
+    livre_titres: {},
+    ocr_fixes: [],
+  },
+
+  'cahiers-pe-t3': {
+    id: 'cahiers-pe-t3',
+    titre: 'Les Cahiers de Petit-Enghien',
+    titre_court: 'Cahiers de Petit-Enghien',
+    auteur: 'Union des groupements patriotiques de Petit-Enghien',
+    annee: 2001,
+    tome: 3,
+    source_file: 'cahiers-pe-t3_fulltext.txt',
+    livre_titres: {},
+    ocr_fixes: [],
+  },
+
+  'cahiers-pe-t4': {
+    id: 'cahiers-pe-t4',
+    titre: 'Les Cahiers de Petit-Enghien',
+    titre_court: 'Cahiers de Petit-Enghien',
+    auteur: 'Union des groupements patriotiques de Petit-Enghien',
+    annee: 2007,
+    tome: 4,
+    source_file: 'cahiers-pe-t4_fulltext.txt',
+    livre_titres: {},
+    ocr_fixes: [],
+  },
 };
 
 export function getOuvrage(id: string): OuvrageConfig {

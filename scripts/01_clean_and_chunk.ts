@@ -101,7 +101,10 @@ function createChunks(text: string, ouvrage: OuvrageConfig): Chunk[] {
   const chunks: Chunk[] = [];
   const lines = text.split('\n');
 
-  let currentLivre = 'I';
+  // Vide tant qu'aucun marqueur LIVRE n'est rencontre : les recueils sans
+  // partie de premier niveau (Cahiers) ne doivent pas etre etiquetes
+  // "Livre I" par defaut — formatLocation() omet un livre vide.
+  let currentLivre = '';
   let currentChapitre = '';
   let currentSection: string | undefined;
   let currentContent = '';
