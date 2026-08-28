@@ -149,6 +149,15 @@ VALUES
     2007, 4, '{}'::jsonb, FALSE,
     'Sous droits — reproduction autorisée (confirmée par le propriétaire du projet, août 2026)',
     43
+  ),
+  (
+    'godet-1967',
+    'Jadis à Petit-Enghien, ou prospection dans le passé de ce village',
+    'Godet 1967',
+    'Jean Godet',
+    1967, NULL, '{}'::jsonb, FALSE,
+    'Sous droits — reproduction autorisée (confirmée par le propriétaire du projet, août 2026)',
+    50
   )
 ON CONFLICT (id) DO UPDATE
 SET titre       = EXCLUDED.titre,

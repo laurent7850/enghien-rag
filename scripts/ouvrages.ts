@@ -148,6 +148,20 @@ export const OUVRAGES: Record<string, OuvrageConfig> = {
     livre_titres: {},
     ocr_fixes: [],
   },
+
+  'godet-1967': {
+    id: 'godet-1967',
+    titre: 'Jadis à Petit-Enghien, ou prospection dans le passé de ce village',
+    titre_court: 'Godet 1967',
+    auteur: 'Jean Godet',
+    annee: 1967,
+    source_file: 'godet-1967_fulltext.txt',
+    // Livre a chapitres sans partie de premier niveau : sections seules.
+    livre_titres: {},
+    // Texte issu de l'OCR vision (00b_ocr_vision.py) : propre, aucune
+    // correction globale necessaire.
+    ocr_fixes: [],
+  },
 };
 
 export function getOuvrage(id: string): OuvrageConfig {

@@ -1,7 +1,9 @@
 # Où en est le travail — reprise
 
 Dernières sessions : passage du corpus en multi-ouvrages, digitalisation de
-**Reygaerts 1998 (t. I-II)** et des **Cahiers de Petit-Enghien (t. I-IV)**.
+**Reygaerts 1998 (t. I-II)**, des **Cahiers de Petit-Enghien (t. I-IV)** et de
+**Jadis à Petit-Enghien (Godet 1967, OCR vision)**. Le corpus source prévu est
+complet : 8 ouvrages.
 
 ## Emplacement
 
@@ -24,10 +26,10 @@ limite `MAX_PATH` lors du build Next depuis un dossier profond.
   isolée de `enghien_rag`.
 - Rôle dédié **`enghien_dev_user`**, droits limités à cette seule base.
   Mot de passe dans `.env.local` (gitignoré).
-- Contenu (7 ouvrages, tous publiés pour le test) : Matthieu 745 chunks
+- Contenu (8 ouvrages, tous publiés pour le test) : Matthieu 745 chunks
   (copie lecture seule depuis la production), Reygaerts t. I 830 + t. II 863,
-  Cahiers de Petit-Enghien t. I 115 + t. II 153 + t. III 67 + t. IV 96.
-  Smoke test au vert sur les sept : filtre étanche, aucune fuite de contenu
+  Cahiers de Petit-Enghien 115+153+67+96, Godet 1967 155.
+  Smoke test au vert sur les huit : filtre étanche, aucune fuite de contenu
   masqué, citations correctes.
 
 ### Relancer le test
@@ -73,7 +75,7 @@ cd /c/tmp/enghien-rag && npx tsx scripts/99_smoke_test.ts
 4. **Réingérer le Matthieu** : 265 de ses 745 chunks (35,6 %) sont cités sans
    page en production. Le correctif de pagination les récupérerait, mais sa
    structure de 1876 demande sa propre configuration dans `00_extract_pdf.py`.
-5. **Dernier volume** : Jadis à Petit-Enghien (autorisation confirmée).
+5. ~~Dernier volume~~ : fait — le corpus source prévu est complet.
 
 ## Nettoyage éventuel
 

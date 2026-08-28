@@ -155,12 +155,32 @@ le parsing du même PDF.
 Toujours procéder sur **un échantillon de 10 pages** et comparer les sorties avant
 de lancer un ouvrage entier.
 
-### c) OCR en échec sur typographie ancienne → modèle vision
+### c) OCR vision — implémenté dans `scripts/00b_ocr_vision.py`
 
-Repli pour les impressions du XIXᵉ que les OCR génériques massacrent. Rendre les
-pages en images avec PyMuPDF, puis les soumettre à un modèle vision bon marché
-(`google/gemini-3.7-flash` et consorts). Avantage décisif : le format de sortie
-est imposé dans le prompt (marqueurs de page, structure), plutôt que post-traité.
+Pour les scans jamais océrisés (producteur « ScanSnap » ou similaire, 0 caractère
+de couche texte) et les impressions anciennes que les OCR génériques massacrent.
+Chaque page est rendue en image (150 dpi) puis transcrite par un modèle vision
+via OpenRouter — même clé `OPENROUTER_API_KEY` que le reste du projet.
+
+```bash
+py -3 scripts/00b_ocr_vision.py <ouvrage_id>
+```
+
+Avantages décisifs, constatés sur « Jadis à Petit-Enghien » (Godet 1967) :
+
+- **le format de sortie est imposé dans le prompt** : folio « — n — », titres
+  préfixés « TITRE: », notes regroupées après « NOTES: », césures recollées —
+  l'assemblage vers le contrat de sortie est direct, sans post-traitement fragile ;
+- **cache disque par page** (`data/<id>_ocr/pNNN.txt`) : une interruption ou un
+  rerun ne repaye que les pages manquantes ;
+- les mêmes garde-fous de folios que `00_extract_pdf.py` (monotonie, borne de
+  saut, resynchronisation) sont appliqués à l'assemblage ;
+- coût mesuré : **0,68 $ pour 176 pages** (`google/gemini-3.7-flash`), qualité
+  vérifiée fidèle au caractère près contre les images sources.
+
+Le plugin `file-parser` d'OpenRouter (moteur `cloudflare-ai`, gratuit) a été
+essayé en premier conformément à la stratégie : réponse invalide sur notre
+échantillon. Réessayer en premier reste la bonne stratégie — c'est gratuit.
 
 ---
 

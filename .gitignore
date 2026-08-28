@@ -65,3 +65,6 @@ deploy-vps.sh
 # Python
 __pycache__/
 *.pyc
+
+# Donnees d ouvrages : tout scripts/data est hors depot (souvent sous droits)
+scripts/data/
