@@ -12,8 +12,11 @@ Le dépôt de travail est ici : `C:\tmp\enghien-rag`, branche **`develop`**,
 limite `MAX_PATH` lors du build Next depuis un dossier profond.
 
 ✅ **Déployé en production le 28/08/2026** : les 8 ouvrages sont en ligne sur
-https://enghien.srv767464.hstgr.cloud/enghien (image `ce82a9b`, 3 024 chunks
-tous publiés). Dépublication d'urgence : voir docs/DEPLOIEMENT.md.
+https://enghien.srv767464.hstgr.cloud/enghien (3 024 chunks tous publiés).
+Dépublication d'urgence : voir docs/DEPLOIEMENT.md.
+
+Image en production : **`a2b642c`** (01/09/2026 — favicon au sceau du Cercle
+Royal Archéologique d'Enghien, `app/favicon.ico` + `app/icon.png`).
 
 ## État de la production — inchangé
 

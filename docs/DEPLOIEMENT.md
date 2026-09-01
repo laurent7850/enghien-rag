@@ -49,7 +49,8 @@ total 3 024 chunks.
 
 ## 3. Bascule du conteneur web sur la nouvelle image
 
-Le tag du build CI validé pour ce déploiement est **`ce82a9b`**.
+Le tag du build CI en production est **`a2b642c`** (déployé le 01/09/2026,
+favicon au sceau du Cercle). Précédent : `ce82a9b`.
 
 ```bash
 ssh -i ~/.ssh/vps767464_ed25519 root@193.203.191.251 "sed -i -E 's|(image: ghcr.io/laurent7850/enghien-rag:).*|\1<TAG>|' /root/enghien/docker-compose.yml && cd /root/enghien && docker compose pull web && docker compose up -d web && sleep 8 && docker logs enghien-web --tail 5"
