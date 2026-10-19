@@ -71,9 +71,13 @@ export async function POST(request: NextRequest) {
           const sourcesEvent = `data: ${JSON.stringify({ type: 'sources', sources: sourcesMetadata })}\n\n`;
           controller.enqueue(encoder.encode(sourcesEvent));
 
-          // Stream via OpenRouter (Claude)
+          // Stream via OpenRouter (Claude).
+          // Le modèle est surchargeable par variable d'environnement : OpenRouter
+          // retire les anciens slugs (claude-sonnet-4 a disparu en octobre 2026,
+          // cassant toute génération en production), et une panne de ce type doit
+          // pouvoir se régler par un changement d'env, sans rebuild de l'image.
           const chatStream = await openrouter.chat.completions.create({
-            model: 'anthropic/claude-sonnet-4',
+            model: process.env.OPENROUTER_MODEL || 'anthropic/claude-sonnet-5.5',
             max_tokens: 2048,
             stream: true,
             messages: [
